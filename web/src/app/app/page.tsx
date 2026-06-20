@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { api, type ActivityGrid as GridT } from "@/lib/api";
 import { useAuth } from "@/lib/auth-store";
-import { todayKst } from "@/lib/time";
+import { addDaysIso, todayKst } from "@/lib/time";
 
 export default function HomePage() {
   const router = useRouter();
@@ -28,10 +28,23 @@ export default function HomePage() {
 
   useEffect(() => {
     let alive = true;
+    // For accounts younger than 1 year, anchor the grid to the first day of the
+    // signup month so the leftmost column is intuitive (e.g. 6/1). The window
+    // is 364 days = 52 weeks. Older accounts fall back to the rolling default.
+    const signupDate = user?.createdAt?.slice(0, 10);
+    const signupFirst = signupDate
+      ? `${signupDate.slice(0, 7)}-01`
+      : undefined;
+    const windowEnd = signupFirst
+      ? addDaysIso(signupFirst, 363)
+      : undefined;
+    const useAnchored = !!(signupFirst && windowEnd && windowEnd >= today);
+    const fromArg = useAnchored ? signupFirst : undefined;
+    const toArg = useAnchored ? windowEnd : undefined;
     (async () => {
       try {
         const [g, b] = await Promise.all([
-          api.activityGrid(),
+          api.activityGrid(fromArg, toArg),
           api.creditBalance(),
         ]);
         if (!alive) return;
@@ -46,7 +59,7 @@ export default function HomePage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [user?.createdAt, today]);
 
   return (
     <div className="flex flex-col gap-6">

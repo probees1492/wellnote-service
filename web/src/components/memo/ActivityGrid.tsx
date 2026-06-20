@@ -122,7 +122,7 @@ export function ActivityGrid({
                   return (
                     <div
                       key={ri}
-                      className="h-3 w-3 rounded-[2px] bg-transparent"
+                      className="h-3 w-3 rounded-[2px] bg-grid-empty opacity-25"
                     />
                   );
                 }
