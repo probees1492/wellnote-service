@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, type MemoWithBody } from "@/lib/api";
 import { todayKst } from "@/lib/time";
 import { Button } from "@/components/ui/Button";
 
-export default function MemoByDatePage() {
-  const params = useParams<{ date: string }>();
-  const date = params.date;
+function MemoByDateInner() {
+  const params = useSearchParams();
+  const date = params.get("date") ?? "";
   const router = useRouter();
   const today = todayKst();
   const [memo, setMemo] = useState<MemoWithBody | null>(null);
@@ -19,6 +19,10 @@ export default function MemoByDatePage() {
 
   useEffect(() => {
     let alive = true;
+    if (!date) {
+      router.replace("/app");
+      return;
+    }
     (async () => {
       try {
         if (date === today) {
@@ -79,5 +83,13 @@ export default function MemoByDatePage() {
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{memo.body}</ReactMarkdown>
       </article>
     </div>
+  );
+}
+
+export default function MemoByDatePage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-text-muted">불러오는 중...</div>}>
+      <MemoByDateInner />
+    </Suspense>
   );
 }

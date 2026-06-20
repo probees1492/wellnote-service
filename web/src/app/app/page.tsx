@@ -87,7 +87,7 @@ export default function HomePage() {
           todayIso={today}
           onCellClick={(c) => {
             if (c.date === today) router.push("/app/today");
-            else router.push(`/app/memo/${c.date}`);
+            else router.push(`/app/memo?date=${c.date}`);
           }}
         />
       </div>

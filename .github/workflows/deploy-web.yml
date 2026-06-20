@@ -49,10 +49,10 @@ jobs:
           fi
           echo "environment=$ENV" >> "$GITHUB_OUTPUT"
           case "$ENV" in
-            dev)   echo "api_base_url=https://api-dev.wellnote.app"   >> "$GITHUB_OUTPUT"; echo "branch=develop" >> "$GITHUB_OUTPUT" ;;
-            stage) echo "api_base_url=https://api-stage.wellnote.app" >> "$GITHUB_OUTPUT"; echo "branch=stage"   >> "$GITHUB_OUTPUT" ;;
-            prod)  echo "api_base_url=https://api.wellnote.app"       >> "$GITHUB_OUTPUT"; echo "branch=main"    >> "$GITHUB_OUTPUT" ;;
-            *)     echo "api_base_url="                                >> "$GITHUB_OUTPUT"; echo "branch="        >> "$GITHUB_OUTPUT" ;;
+            dev)   echo "api_base_url=https://wellnote-api-dev.parovia-6614b80f.workers.dev"   >> "$GITHUB_OUTPUT"; echo "branch=develop" >> "$GITHUB_OUTPUT" ;;
+            stage) echo "api_base_url=https://wellnote-api-stage.parovia-6614b80f.workers.dev" >> "$GITHUB_OUTPUT"; echo "branch=stage"   >> "$GITHUB_OUTPUT" ;;
+            prod)  echo "api_base_url=https://wellnote-api-prod.parovia-6614b80f.workers.dev"  >> "$GITHUB_OUTPUT"; echo "branch=main"    >> "$GITHUB_OUTPUT" ;;
+            *)     echo "api_base_url="                                                         >> "$GITHUB_OUTPUT"; echo "branch="        >> "$GITHUB_OUTPUT" ;;
           esac
 
   deploy:
@@ -85,6 +85,7 @@ jobs:
 
       - name: Build Next.js (static export)
         env:
+          NEXT_OUTPUT: export
           NEXT_PUBLIC_API_BASE_URL: ${{ needs.resolve-env.outputs.api_base_url }}
           NEXT_PUBLIC_ENVIRONMENT: ${{ needs.resolve-env.outputs.environment }}
         run: pnpm build
@@ -95,10 +96,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: web
-          # Adjust `wellnote-web` project name to match the Cloudflare Pages
-          # project that you created (one project per environment OR one
-          # project with branch-based environments).
           command: >-
-            pages deploy .next
+            pages deploy out
             --project-name=wellnote-web-${{ needs.resolve-env.outputs.environment }}
             --branch=${{ needs.resolve-env.outputs.branch }}

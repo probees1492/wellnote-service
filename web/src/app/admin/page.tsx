@@ -68,7 +68,7 @@ export default function AdminDashboard() {
                   <td>{u.role ?? "user"}</td>
                   <td>
                     <Link
-                      href={`/admin/users/${u.id}`}
+                      href={`/admin/users?id=${u.id}`}
                       className="text-edge-blue underline"
                     >
                       상세

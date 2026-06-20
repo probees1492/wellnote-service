@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { api, type AdminUserRow } from "@/lib/api";
 
-export default function AdminUserDetail() {
-  const params = useParams<{ id: string }>();
-  const id = params.id;
+function AdminUserDetailInner() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const id = params.get("id") ?? "";
   const [user, setUser] = useState<AdminUserRow | null>(null);
   const [amount, setAmount] = useState("10");
   const [reason, setReason] = useState("");
@@ -28,6 +29,10 @@ export default function AdminUserDetail() {
   }
 
   useEffect(() => {
+    if (!id) {
+      router.replace("/admin");
+      return;
+    }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -148,5 +153,13 @@ export default function AdminUserDetail() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function AdminUserDetailPage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-text-muted">불러오는 중...</div>}>
+      <AdminUserDetailInner />
+    </Suspense>
   );
 }

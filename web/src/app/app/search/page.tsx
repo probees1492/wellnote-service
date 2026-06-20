@@ -71,7 +71,7 @@ export default function SearchPage() {
           <div className="text-sm text-text-muted">결과가 없습니다.</div>
         ) : (
           items.map((m) => (
-            <Link key={m.id} href={`/app/memo/${m.dateKst}`}>
+            <Link key={m.id} href={`/app/memo?date=${m.dateKst}`}>
               <Card className="hover:shadow-xs">
                 <div className="flex items-baseline justify-between">
                   <div className="font-medium">{m.title || m.dateKst}</div>
