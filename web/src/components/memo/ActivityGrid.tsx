@@ -28,10 +28,14 @@ function monthOf(iso: string): number {
 export function ActivityGrid({
   grid,
   todayIso,
+  signupDate,
   onCellClick,
 }: {
   grid: GridT | null;
   todayIso: string;
+  /** ISO date (YYYY-MM-DD). Cells before this date render as a faded
+   *  placeholder so brand-new accounts still see the full grid scaffold. */
+  signupDate?: string;
   onCellClick?: (cell: ActivityCell) => void;
 }) {
   if (!grid) {
@@ -123,23 +127,41 @@ export function ActivityGrid({
                   );
                 }
                 const isToday = cell.date === todayIso;
+                const isFuture = cell.date > todayIso;
+                const isPreSignup = signupDate
+                  ? cell.date < signupDate
+                  : false;
+                const isPlaceholder = isFuture || isPreSignup;
                 return (
                   <button
                     key={ri}
                     type="button"
-                    onClick={() => onCellClick?.(cell)}
-                    title={`${cell.date} · ${cell.charCount}자`}
+                    onClick={() =>
+                      isPlaceholder ? undefined : onCellClick?.(cell)
+                    }
+                    disabled={isPlaceholder}
+                    title={
+                      isPlaceholder
+                        ? cell.date
+                        : `${cell.date} · ${cell.charCount}자`
+                    }
                     data-testid={
                       isToday ? "grid-cell-today" : `grid-cell-${cell.date}`
                     }
                     data-date={cell.date}
                     data-level={cell.level}
+                    data-placeholder={isPlaceholder ? "true" : undefined}
                     className={cn(
-                      "h-3 w-3 cursor-pointer rounded-[2px]",
+                      "h-3 w-3 rounded-[2px]",
                       LEVEL_BG[cell.level],
-                      isToday
-                        ? "ring-2 ring-ring ring-offset-1 ring-offset-background"
-                        : "hover:outline hover:outline-1 hover:outline-ring",
+                      isPlaceholder
+                        ? "cursor-default opacity-25"
+                        : "cursor-pointer",
+                      isToday &&
+                        "ring-2 ring-ring ring-offset-1 ring-offset-background",
+                      !isPlaceholder &&
+                        !isToday &&
+                        "hover:outline hover:outline-1 hover:outline-ring",
                     )}
                   />
                 );
