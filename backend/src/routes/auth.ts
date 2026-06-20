@@ -450,7 +450,16 @@ async function verifyGoogleIdToken(idToken: string, env: Env | undefined) {
     if (!payloadB64) return null;
     const json = JSON.parse(b64urlDecode(payloadB64));
     const aud = json.aud as string | undefined;
-    if (env?.GOOGLE_CLIENT_ID && aud !== env.GOOGLE_CLIENT_ID) return null;
+    // GOOGLE_CLIENT_ID may be a comma-separated list (web,ios,android) so a
+    // single backend can authenticate id_tokens issued for any platform.
+    if (env?.GOOGLE_CLIENT_ID) {
+      const allowed = env.GOOGLE_CLIENT_ID.split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!aud || !allowed.includes(aud)) return null;
+    }
+    if (json.iss && !["https://accounts.google.com", "accounts.google.com"].includes(json.iss)) return null;
+    if (json.exp && Date.now() / 1000 > Number(json.exp)) return null;
     return { sub: String(json.sub), email: json.email as string | undefined };
   } catch {
     return null;
