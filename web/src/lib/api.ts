@@ -34,19 +34,97 @@ export interface ApiError extends Error {
 const ACCESS_KEY = "wn:access";
 const REFRESH_KEY = "wn:refresh";
 const USER_KEY = "wn:user";
+const MODE_KEY = "wn:mode";
+
+export type StorageMode = "persistent" | "session";
+
+function getModeFromStorage(): StorageMode {
+  if (typeof window === "undefined") return "persistent";
+  // sessionStorage takes precedence: a session-only login should win even if
+  // older persistent values linger.
+  try {
+    const fromSession = window.sessionStorage.getItem(MODE_KEY);
+    if (fromSession === "session" || fromSession === "persistent") {
+      return fromSession;
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const fromLocal = window.localStorage.getItem(MODE_KEY);
+    if (fromLocal === "session" || fromLocal === "persistent") {
+      return fromLocal;
+    }
+  } catch {
+    /* ignore */
+  }
+  return "persistent";
+}
+
+function activeStorage(mode: StorageMode): Storage | null {
+  if (typeof window === "undefined") return null;
+  return mode === "session" ? window.sessionStorage : window.localStorage;
+}
+
+function bothStorages(): Storage[] {
+  if (typeof window === "undefined") return [];
+  return [window.localStorage, window.sessionStorage];
+}
 
 export const tokenStore = {
+  getMode(): StorageMode {
+    return getModeFromStorage();
+  },
+  setMode(mode: StorageMode): void {
+    if (typeof window === "undefined") return;
+    // Record the active mode in BOTH storages so a fresh page load can detect
+    // it even before any read. We prefer sessionStorage on read.
+    try {
+      window.sessionStorage.setItem(MODE_KEY, mode);
+    } catch {
+      /* ignore */
+    }
+    try {
+      window.localStorage.setItem(MODE_KEY, mode);
+    } catch {
+      /* ignore */
+    }
+  },
   getAccess(): string | null {
     if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(ACCESS_KEY);
+    const mode = getModeFromStorage();
+    const s = activeStorage(mode);
+    if (!s) return null;
+    // Fall back to the other storage if the active one is empty (e.g., mode
+    // changed but a previous run wrote to localStorage only).
+    return (
+      s.getItem(ACCESS_KEY) ??
+      (mode === "session"
+        ? window.localStorage.getItem(ACCESS_KEY)
+        : window.sessionStorage.getItem(ACCESS_KEY))
+    );
   },
   getRefresh(): string | null {
     if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(REFRESH_KEY);
+    const mode = getModeFromStorage();
+    const s = activeStorage(mode);
+    if (!s) return null;
+    return (
+      s.getItem(REFRESH_KEY) ??
+      (mode === "session"
+        ? window.localStorage.getItem(REFRESH_KEY)
+        : window.sessionStorage.getItem(REFRESH_KEY))
+    );
   },
   getUser(): ApiUser | null {
     if (typeof window === "undefined") return null;
-    const raw = window.localStorage.getItem(USER_KEY);
+    const mode = getModeFromStorage();
+    const s = activeStorage(mode);
+    const raw =
+      (s ? s.getItem(USER_KEY) : null) ??
+      (mode === "session"
+        ? window.localStorage.getItem(USER_KEY)
+        : window.sessionStorage.getItem(USER_KEY));
     if (!raw) return null;
     try {
       return JSON.parse(raw) as ApiUser;
@@ -56,19 +134,43 @@ export const tokenStore = {
   },
   set(tokens: Tokens, user?: ApiUser): void {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(ACCESS_KEY, tokens.accessToken);
-    window.localStorage.setItem(REFRESH_KEY, tokens.refreshToken);
-    if (user) window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+    const mode = getModeFromStorage();
+    const s = activeStorage(mode);
+    if (!s) return;
+    // Clear the OTHER storage so we don't leak credentials between modes.
+    const other =
+      mode === "session" ? window.localStorage : window.sessionStorage;
+    try {
+      other.removeItem(ACCESS_KEY);
+      other.removeItem(REFRESH_KEY);
+      other.removeItem(USER_KEY);
+    } catch {
+      /* ignore */
+    }
+    s.setItem(ACCESS_KEY, tokens.accessToken);
+    s.setItem(REFRESH_KEY, tokens.refreshToken);
+    if (user) s.setItem(USER_KEY, JSON.stringify(user));
   },
   setUser(user: ApiUser): void {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+    const mode = getModeFromStorage();
+    const s = activeStorage(mode);
+    if (!s) return;
+    s.setItem(USER_KEY, JSON.stringify(user));
   },
   clear(): void {
     if (typeof window === "undefined") return;
-    window.localStorage.removeItem(ACCESS_KEY);
-    window.localStorage.removeItem(REFRESH_KEY);
-    window.localStorage.removeItem(USER_KEY);
+    for (const s of bothStorages()) {
+      try {
+        s.removeItem(ACCESS_KEY);
+        s.removeItem(REFRESH_KEY);
+        s.removeItem(USER_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+    // Mode key is intentionally preserved so the user's preference survives
+    // a logout. Reset to "persistent" only on explicit choice.
   },
 };
 
@@ -168,6 +270,12 @@ export const api = {
     }),
   login: (body: { email: string; password: string }) =>
     request<{ user: ApiUser; tokens: Tokens }>("/auth/login", {
+      method: "POST",
+      body,
+      auth: false,
+    }),
+  socialGoogle: (body: { idToken: string }) =>
+    request<{ user: ApiUser; tokens: Tokens }>("/auth/social/google", {
       method: "POST",
       body,
       auth: false,

@@ -88,6 +88,11 @@ jobs:
           NEXT_OUTPUT: export
           NEXT_PUBLIC_API_BASE_URL: ${{ needs.resolve-env.outputs.api_base_url }}
           NEXT_PUBLIC_ENVIRONMENT: ${{ needs.resolve-env.outputs.environment }}
+          # Public Google OAuth client ID per environment. When unset, the
+          # web app renders the "구글 로그인 설정 필요" fallback button and
+          # email/password auth continues to work as before. Configure via:
+          #   Settings → Environments → <env> → Variables → NEXT_PUBLIC_GOOGLE_CLIENT_ID
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
         run: pnpm build
 
       - name: Deploy to Cloudflare Pages

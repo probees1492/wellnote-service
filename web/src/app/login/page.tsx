@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { LogoWordmark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,9 +14,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogoWordmark } from "@/components/brand/Logo";
 import { useAuth } from "@/lib/auth-store";
 
 export default function LoginPage() {
@@ -22,6 +24,7 @@ export default function LoginPage() {
   const login = useAuth((s) => s.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +33,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, { remember });
       router.push("/app");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "로그인에 실패했습니다.";
@@ -79,6 +82,25 @@ export default function LoginPage() {
                   data-testid="login-password"
                 />
               </div>
+
+              <label
+                className="flex cursor-pointer items-center gap-2 text-sm"
+                htmlFor="login-remember"
+              >
+                <Checkbox
+                  id="login-remember"
+                  checked={remember}
+                  onCheckedChange={setRemember}
+                  data-testid="login-remember"
+                />
+                <span className="select-none text-foreground">로그인 유지</span>
+                <span className="ml-1 text-xs text-muted-foreground">
+                  {remember
+                    ? "(브라우저를 닫아도 로그인 유지)"
+                    : "(브라우저를 닫으면 로그아웃)"}
+                </span>
+              </label>
+
               {error ? (
                 <div
                   className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
@@ -103,9 +125,12 @@ export default function LoginPage() {
               <div className="h-px flex-1 bg-border" />
             </div>
             <div className="mt-4 flex flex-col gap-2">
-              <Button variant="outline" disabled>
-                Google로 계속하기 (Coming soon)
-              </Button>
+              <GoogleSignInButton
+                remember={remember}
+                onSuccess={() => router.push("/app")}
+                text="signin_with"
+                testId="google-signin"
+              />
               <Button variant="outline" disabled>
                 Apple로 계속하기 (Coming soon)
               </Button>

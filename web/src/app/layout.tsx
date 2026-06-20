@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { GoogleAuthProvider } from "@/components/auth/GoogleAuthProvider";
 import { ThemeProvider } from "@/components/shell/theme-provider";
 
 export const metadata: Metadata = {
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <GoogleAuthProvider>{children}</GoogleAuthProvider>
         </ThemeProvider>
       </body>
     </html>

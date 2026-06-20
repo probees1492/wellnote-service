@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { LogoWordmark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,9 +14,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogoWordmark } from "@/components/brand/Logo";
 import { useAuth } from "@/lib/auth-store";
 
 export default function SignupPage() {
@@ -24,6 +26,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +43,7 @@ export default function SignupPage() {
     }
     setLoading(true);
     try {
-      await signup(email, password, displayName || undefined);
+      await signup(email, password, displayName || undefined, { remember });
       router.push("/app");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "가입에 실패했습니다.";
@@ -112,6 +115,20 @@ export default function SignupPage() {
                   data-testid="signup-displayname"
                 />
               </div>
+
+              <label
+                className="flex cursor-pointer items-center gap-2 text-sm"
+                htmlFor="signup-remember"
+              >
+                <Checkbox
+                  id="signup-remember"
+                  checked={remember}
+                  onCheckedChange={setRemember}
+                  data-testid="signup-remember"
+                />
+                <span className="select-none text-foreground">로그인 유지</span>
+              </label>
+
               {error ? (
                 <div
                   className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
@@ -136,9 +153,12 @@ export default function SignupPage() {
               <div className="h-px flex-1 bg-border" />
             </div>
             <div className="mt-4 flex flex-col gap-2">
-              <Button variant="outline" disabled>
-                Google로 계속하기 (Coming soon)
-              </Button>
+              <GoogleSignInButton
+                remember={remember}
+                onSuccess={() => router.push("/app")}
+                text="signup_with"
+                testId="google-signup"
+              />
               <Button variant="outline" disabled>
                 Apple로 계속하기 (Coming soon)
               </Button>
