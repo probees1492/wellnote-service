@@ -1,0 +1,94 @@
+name: Deploy Backend (Cloudflare Workers)
+
+on:
+  push:
+    branches:
+      - develop
+      - "release/**"
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options: [dev, stage, prod]
+
+concurrency:
+  group: deploy-backend-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  resolve-env:
+    name: Resolve target environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.pick.outputs.environment }}
+    steps:
+      - id: pick
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GH_REF: ${{ github.ref }}
+          INPUT_ENV: ${{ inputs.environment }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "environment=$INPUT_ENV" >> "$GITHUB_OUTPUT"
+          elif [ "$GH_REF" = "refs/heads/develop" ]; then
+            echo "environment=dev" >> "$GITHUB_OUTPUT"
+          elif [[ "$GH_REF" == refs/heads/release/* ]]; then
+            echo "environment=stage" >> "$GITHUB_OUTPUT"
+          elif [ "$GH_REF" = "refs/heads/main" ]; then
+            echo "environment=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    name: Deploy (${{ needs.resolve-env.outputs.environment }})
+    needs: resolve-env
+    if: ${{ needs.resolve-env.outputs.environment != '' }}
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run unit tests (smoke)
+        run: pnpm test:unit
+
+      - name: Apply D1 migrations (remote)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler d1 migrations apply DB \
+            --env ${{ needs.resolve-env.outputs.environment }} \
+            --remote
+
+      - name: Deploy Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler deploy --env ${{ needs.resolve-env.outputs.environment }}

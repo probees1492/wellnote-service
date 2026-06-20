@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f9fc;
+  --bg-tertiary: #eef2f7;
+  --edge-blue: #2563eb;
+  --edge-blue-hover: #1d4ed8;
+  --edge-blue-soft: #dbeafe;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-on-blue: #ffffff;
+  --border-default: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --warning: #f59e0b;
+  --success: #10b981;
+  --grid-empty: #f1f5f9;
+  --grid-l1: #dbeafe;
+  --grid-l2: #93c5fd;
+  --grid-l3: #3b82f6;
+  --grid-l4: #1d4ed8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard Variable",
+    Pretendard, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Editor focus blue left edge */
+.editor-focus-edge:focus {
+  outline: none;
+  border-left: 4px solid var(--edge-blue);
+  padding-left: 12px;
+}
+
+/* Tiny prose styles for markdown rendering */
+.markdown-body h1 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+.markdown-body h2 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+.markdown-body p {
+  margin: 8px 0;
+  line-height: 1.7;
+  font-size: 16px;
+}
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 20px;
+  margin: 8px 0;
+  line-height: 1.7;
+}
+.markdown-body code {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-mono, "JetBrains Mono", Menlo, Consolas, monospace);
+  font-size: 14px;
+}
+.markdown-body pre {
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 14px;
+}
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+}
+.markdown-body blockquote {
+  border-left: 3px solid var(--edge-blue);
+  padding-left: 12px;
+  color: var(--text-muted);
+  margin: 12px 0;
+}

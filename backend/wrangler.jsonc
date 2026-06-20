@@ -1,0 +1,159 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wellnote-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+
+  // Default (used for `wrangler dev`) — points at local/dev bindings.
+  // Production deploys MUST use one of the named environments below.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wellnote-dev",
+      // Replace with the id printed by: wrangler d1 create wellnote-dev
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEMO_BUCKET",
+      "bucket_name": "wellnote-memos-dev"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SESSION_KV",
+      // Replace with the id printed by: wrangler kv namespace create wellnote-sessions-dev
+      "id": "00000000000000000000000000000000"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "0 15 * * *",
+      "0 * * * *",
+      "0 18 * * 0"
+    ]
+  },
+  "vars": {
+    "ENVIRONMENT": "dev"
+  },
+
+  "env": {
+    "dev": {
+      "name": "wellnote-api-dev",
+      "vars": {
+        "ENVIRONMENT": "dev"
+      },
+      "routes": [
+        // Optional — set up via Cloudflare dashboard or uncomment after DNS is ready
+        // { "pattern": "api-dev.wellnote.app/*", "zone_name": "wellnote.app" }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "wellnote-dev",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEMO_BUCKET",
+          "bucket_name": "wellnote-memos-dev"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "SESSION_KV",
+          "id": "00000000000000000000000000000000"
+        }
+      ],
+      "triggers": {
+        "crons": [
+          "0 15 * * *",
+          "0 * * * *",
+          "0 18 * * 0"
+        ]
+      }
+    },
+
+    "stage": {
+      "name": "wellnote-api-stage",
+      "vars": {
+        "ENVIRONMENT": "stage"
+      },
+      "routes": [
+        // { "pattern": "api-stage.wellnote.app/*", "zone_name": "wellnote.app" }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "wellnote-stage",
+          "database_id": "11111111-1111-1111-1111-111111111111",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEMO_BUCKET",
+          "bucket_name": "wellnote-memos-stage"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "SESSION_KV",
+          "id": "11111111111111111111111111111111"
+        }
+      ],
+      "triggers": {
+        "crons": [
+          "0 15 * * *",
+          "0 * * * *",
+          "0 18 * * 0"
+        ]
+      }
+    },
+
+    "prod": {
+      "name": "wellnote-api-prod",
+      "vars": {
+        "ENVIRONMENT": "prod"
+      },
+      "routes": [
+        // { "pattern": "api.wellnote.app/*", "zone_name": "wellnote.app" }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "wellnote-prod",
+          "database_id": "22222222-2222-2222-2222-222222222222",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEMO_BUCKET",
+          "bucket_name": "wellnote-memos-prod"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "SESSION_KV",
+          "id": "22222222222222222222222222222222"
+        }
+      ],
+      "triggers": {
+        "crons": [
+          "0 15 * * *",
+          "0 * * * *",
+          "0 18 * * 0"
+        ]
+      }
+    }
+  }
+}

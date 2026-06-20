@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop, "release/**"]
+  push:
+    branches: [main, develop, "release/**"]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (typecheck + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit + integration tests (Vitest)
+        run: pnpm test
+
+  web:
+    name: Web (typecheck + e2e)
+    runs-on: ubuntu-latest
+    needs: backend
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: |
+            web/pnpm-lock.yaml
+            backend/pnpm-lock.yaml
+
+      - name: Install web dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install backend dependencies (for worker dev server)
+        working-directory: backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build web
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8787
+        run: pnpm build
+
+      - name: Start backend worker (dev)
+        working-directory: backend
+        env:
+          ENVIRONMENT: dev
+        run: |
+          nohup pnpm wrangler dev --local --port 8787 --ip 127.0.0.1 \
+            > ../worker.log 2>&1 &
+          echo $! > ../worker.pid
+          # Wait for worker to become ready
+          for _ in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8787/health >/dev/null 2>&1 \
+              || curl -sf http://127.0.0.1:8787/ >/dev/null 2>&1; then
+              echo "worker is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "worker failed to start"; tail -n 100 ../worker.log; exit 1
+
+      - name: Start web (next start)
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8787
+        run: |
+          nohup pnpm start > ../web.log 2>&1 &
+          echo $! > ../web.pid
+          for _ in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3000 >/dev/null 2>&1; then
+              echo "web is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "web failed to start"; tail -n 100 ../web.log; exit 1
+
+      - name: Run Playwright e2e
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8787
+        run: pnpm test:e2e
+
+      - name: Upload Playwright artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            web/test-results
+            web/playwright-report
+            worker.log
+            web.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Stop background services
+        if: always()
+        run: |
+          if [ -f web.pid ]; then kill "$(cat web.pid)" || true; fi
+          if [ -f worker.pid ]; then kill "$(cat worker.pid)" || true; fi

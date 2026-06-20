@@ -1,0 +1,104 @@
+name: Deploy Web (Cloudflare Pages)
+
+on:
+  push:
+    branches:
+      - develop
+      - "release/**"
+      - main
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options: [dev, stage, prod]
+
+concurrency:
+  group: deploy-web-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  resolve-env:
+    name: Resolve target environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.pick.outputs.environment }}
+      api_base_url: ${{ steps.pick.outputs.api_base_url }}
+      branch: ${{ steps.pick.outputs.branch }}
+    steps:
+      - id: pick
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GH_REF: ${{ github.ref }}
+          INPUT_ENV: ${{ inputs.environment }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            ENV="$INPUT_ENV"
+          elif [ "$GH_REF" = "refs/heads/develop" ]; then
+            ENV="dev"
+          elif [[ "$GH_REF" == refs/heads/release/* ]]; then
+            ENV="stage"
+          elif [ "$GH_REF" = "refs/heads/main" ]; then
+            ENV="prod"
+          else
+            ENV=""
+          fi
+          echo "environment=$ENV" >> "$GITHUB_OUTPUT"
+          case "$ENV" in
+            dev)   echo "api_base_url=https://api-dev.wellnote.app"   >> "$GITHUB_OUTPUT"; echo "branch=develop" >> "$GITHUB_OUTPUT" ;;
+            stage) echo "api_base_url=https://api-stage.wellnote.app" >> "$GITHUB_OUTPUT"; echo "branch=stage"   >> "$GITHUB_OUTPUT" ;;
+            prod)  echo "api_base_url=https://api.wellnote.app"       >> "$GITHUB_OUTPUT"; echo "branch=main"    >> "$GITHUB_OUTPUT" ;;
+            *)     echo "api_base_url="                                >> "$GITHUB_OUTPUT"; echo "branch="        >> "$GITHUB_OUTPUT" ;;
+          esac
+
+  deploy:
+    name: Deploy Pages (${{ needs.resolve-env.outputs.environment }})
+    needs: resolve-env
+    if: ${{ needs.resolve-env.outputs.environment != '' }}
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build Next.js (static export)
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ needs.resolve-env.outputs.api_base_url }}
+          NEXT_PUBLIC_ENVIRONMENT: ${{ needs.resolve-env.outputs.environment }}
+        run: pnpm build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: web
+          # Adjust `wellnote-web` project name to match the Cloudflare Pages
+          # project that you created (one project per environment OR one
+          # project with branch-based environments).
+          command: >-
+            pages deploy .next
+            --project-name=wellnote-web-${{ needs.resolve-env.outputs.environment }}
+            --branch=${{ needs.resolve-env.outputs.branch }}
