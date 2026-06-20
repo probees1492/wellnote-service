@@ -82,6 +82,14 @@ const config: Config = {
           "Consolas",
           "monospace",
         ],
+        serif: [
+          "Noto Serif KR",
+          "Nanum Myeongjo",
+          "Apple SD Gothic Neo",
+          "ui-serif",
+          "Georgia",
+          "serif",
+        ],
       },
       keyframes: {
         "accordion-down": {

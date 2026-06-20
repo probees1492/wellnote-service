@@ -115,7 +115,7 @@ export default function TodayPage() {
                 ? "오늘 어떤 일이 있었나요? 마크다운으로 자유롭게 작성하세요."
                 : "메모를 불러오는 중..."
             }
-            className="min-h-[420px] resize-y rounded-lg border-0 p-6 text-base leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="min-h-[420px] resize-y rounded-lg border-0 p-6 font-serif text-base leading-loose focus-visible:ring-0 focus-visible:ring-offset-0"
             data-testid="memo-editor"
             data-ready={memo ? "true" : "false"}
           />

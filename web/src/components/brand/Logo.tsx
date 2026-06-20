@@ -71,7 +71,7 @@ export function LogoWordmark({
 export function LogoLockup({
   className,
   wordmarkSize = "md",
-  showMark = true,
+  showMark = false,
   showWordmark = true,
 }: {
   className?: string;

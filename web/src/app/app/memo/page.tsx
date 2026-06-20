@@ -85,7 +85,10 @@ function MemoByDateInner() {
       </div>
       <Card>
         <CardContent className="p-6">
-          <article className="markdown-body" data-testid="memo-readonly">
+          <article
+            className="markdown-body font-serif leading-loose"
+            data-testid="memo-readonly"
+          >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{memo.body}</ReactMarkdown>
           </article>
         </CardContent>
