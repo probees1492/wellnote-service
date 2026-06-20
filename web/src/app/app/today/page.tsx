@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { SpeechToTextButton } from "@/components/editor/SpeechToTextButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type MemoWithBody } from "@/lib/api";
+import { insertAtCursor } from "@/lib/speech-recognition";
 import { todayKst } from "@/lib/time";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -16,8 +18,10 @@ export default function TodayPage() {
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [sttNotice, setSttNotice] = useState<string | null>(null);
   const debounceRef = useRef<number | null>(null);
   const latestBodyRef = useRef<string>("");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Load today memo
   useEffect(() => {
@@ -40,7 +44,7 @@ export default function TodayPage() {
     };
   }, []);
 
-  async function save() {
+  const save = useCallback(async () => {
     if (!memo) return;
     setSaveState("saving");
     try {
@@ -56,17 +60,60 @@ export default function TodayPage() {
       const msg = e instanceof Error ? e.message : "저장 실패";
       setErr(msg);
     }
-  }
+  }, [memo]);
 
-  function handleChange(v: string) {
-    setBody(v);
-    latestBodyRef.current = v;
+  const scheduleSave = useCallback(() => {
     setSaveState("saving");
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(() => {
       save();
     }, 1000);
+  }, [save]);
+
+  function handleChange(v: string) {
+    setBody(v);
+    latestBodyRef.current = v;
+    scheduleSave();
   }
+
+  const handleTranscript = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const textarea = textareaRef.current;
+      const current = latestBodyRef.current;
+      const cursor = textarea
+        ? (textarea.selectionStart ?? current.length)
+        : current.length;
+      const { value, nextCursor } = insertAtCursor(current, cursor, trimmed);
+      latestBodyRef.current = value;
+      setBody(value);
+      // Move caret to the end of the just-inserted text after React commits.
+      if (textarea) {
+        requestAnimationFrame(() => {
+          try {
+            textarea.focus();
+            textarea.setSelectionRange(nextCursor, nextCursor);
+          } catch {
+            // ignore
+          }
+        });
+      }
+      scheduleSave();
+    },
+    [scheduleSave],
+  );
+
+  const handleSttError = useCallback((message: string) => {
+    setSttNotice(message);
+  }, []);
+
+  // Clear the STT inline notice after 4s.
+  useEffect(() => {
+    if (!sttNotice) return;
+    const id = window.setTimeout(() => setSttNotice(null), 4000);
+    return () => window.clearTimeout(id);
+  }, [sttNotice]);
 
   // Force-save on blur and unmount
   useEffect(() => {
@@ -103,9 +150,25 @@ export default function TodayPage() {
           {err}
         </div>
       ) : null}
+      {sttNotice ? (
+        <div
+          className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          data-testid="stt-notice"
+        >
+          {sttNotice}
+        </div>
+      ) : null}
       <Card>
         <CardContent className="p-0">
+          <div className="flex items-center justify-end px-4 pt-3">
+            <SpeechToTextButton
+              onTranscript={handleTranscript}
+              onError={handleSttError}
+              disabled={!memo}
+            />
+          </div>
           <Textarea
+            ref={textareaRef}
             value={body}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={() => save()}
@@ -115,7 +178,7 @@ export default function TodayPage() {
                 ? "오늘 어떤 일이 있었나요? 마크다운으로 자유롭게 작성하세요."
                 : "메모를 불러오는 중..."
             }
-            className="min-h-[420px] resize-y rounded-lg border-0 p-6 font-serif text-base leading-loose focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="min-h-[420px] resize-y rounded-lg border-0 p-6 pt-3 font-serif text-base leading-loose focus-visible:ring-0 focus-visible:ring-offset-0"
             data-testid="memo-editor"
             data-ready={memo ? "true" : "false"}
           />
