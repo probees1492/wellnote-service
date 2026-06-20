@@ -5,8 +5,27 @@ import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/shell/theme-provider";
 
 export const metadata: Metadata = {
-  title: "WellNote",
-  description: "매일 한 페이지, 봉인되는 일기.",
+  title: {
+    default: "WellNote — We will note!",
+    template: "%s · WellNote",
+  },
+  description: "We will note! — 매일 한 페이지, 봉인되는 일기.",
+  applicationName: "WellNote",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
+    ],
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
+    shortcut: "/favicon.ico",
+  },
+  openGraph: {
+    title: "WellNote — We will note!",
+    description: "매일 한 페이지, 봉인되는 일기.",
+    siteName: "WellNote",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

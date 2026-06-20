@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { LogoLockup } from "@/components/brand/Logo";
 
 interface NavItem {
   href: string;
@@ -71,7 +72,6 @@ interface SidebarProps {
 export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps) {
   const pathname = usePathname();
   const items = variant === "admin" ? ADMIN_ITEMS : APP_ITEMS;
-  const title = variant === "admin" ? "WellNote · Admin" : "WellNote";
 
   return (
     <aside
@@ -79,13 +79,18 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
       className="hidden w-60 shrink-0 border-r bg-card/40 lg:flex lg:flex-col"
       data-testid="sidebar"
     >
-      <div className="flex h-16 items-center px-6 text-lg font-semibold tracking-tight">
+      <div className="flex h-16 items-center px-6">
         <Link href="/app" className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="inline-block h-6 w-6 rounded-md bg-primary"
-          />
-          <span>{title}</span>
+          {variant === "admin" ? (
+            <>
+              <LogoLockup wordmarkSize="md" />
+              <span className="text-xs font-medium text-muted-foreground">
+                Admin
+              </span>
+            </>
+          ) : (
+            <LogoLockup wordmarkSize="md" />
+          )}
         </Link>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">

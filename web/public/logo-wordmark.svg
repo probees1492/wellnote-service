@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 120" width="540" height="120" role="img" aria-label="We'llNote">
+  <text x="0" y="92"
+        font-family="Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-weight="800" font-size="96" letter-spacing="-3"
+        fill="currentColor">We<tspan dx="0" dy="0" font-weight="900">&apos;</tspan>llNote</text>
+</svg>

@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { LogoLockup } from "@/components/brand/Logo";
+
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 
@@ -23,9 +25,6 @@ interface HeaderProps {
 }
 
 export function Header({ variant = "app", showAdminLink = false }: HeaderProps) {
-  const pathname = usePathname();
-  const title = variant === "admin" ? "WellNote · Admin" : "WellNote";
-
   return (
     <header
       className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur lg:px-8"
@@ -95,8 +94,13 @@ export function Header({ variant = "app", showAdminLink = false }: HeaderProps) 
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Link href="/app" className="text-base font-semibold">
-          {title}
+        <Link href="/app">
+          <LogoLockup wordmarkSize="sm" />
+          {variant === "admin" ? (
+            <span className="ml-2 align-middle text-xs font-medium text-muted-foreground">
+              Admin
+            </span>
+          ) : null}
         </Link>
       </div>
 

@@ -7,21 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LogoLockup, LogoWordmark } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-6 backdrop-blur lg:px-8">
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="inline-block h-7 w-7 rounded-md bg-primary"
-          />
-          <span className="text-base font-semibold tracking-tight">
-            WellNote
-          </span>
-        </div>
+        <LogoLockup wordmarkSize="md" />
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <Link href="/login">
@@ -36,7 +29,13 @@ export default function LandingPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-6 py-20 text-center">
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight text-foreground lg:text-5xl">
+        <div className="mb-6 flex justify-center">
+          <LogoWordmark size="xl" />
+        </div>
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+          We will note!
+        </p>
+        <h1 className="mt-6 text-3xl font-semibold leading-tight tracking-tight text-foreground lg:text-4xl">
           매일 한 페이지,{" "}
           <span className="text-primary/80">봉인되는</span> 일기.
         </h1>

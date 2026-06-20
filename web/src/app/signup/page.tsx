@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LogoWordmark } from "@/components/brand/Logo";
 import { useAuth } from "@/lib/auth-store";
 
 export default function SignupPage() {
@@ -54,7 +55,10 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">WellNote 가입</CardTitle>
+            <div className="mb-2 flex justify-center">
+              <LogoWordmark size="lg" />
+            </div>
+            <CardTitle className="text-xl">가입</CardTitle>
             <CardDescription>매일의 기록을 시작해 보세요.</CardDescription>
           </CardHeader>
           <CardContent>
