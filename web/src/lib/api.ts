@@ -302,8 +302,8 @@ export const api = {
     }),
   listMemos: () =>
     request<{ items: Memo[]; nextCursor: string | null }>(`/memos`),
-  activityGrid: () =>
-    request<ActivityGrid>(`/activity/grid`),
+  activityGrid: (from?: string, to?: string) =>
+    request<ActivityGrid>(`/activity/grid`, { query: { from, to } }),
   creditBalance: () => request<{ balance: number }>("/credit/balance"),
   creditTransactions: () =>
     request<{ items: CreditTx[]; nextCursor: string | null }>(

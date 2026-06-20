@@ -74,7 +74,7 @@ export function ActivityGrid({
     }
     const m = monthOf(first.date);
     if (m !== prevMonth) {
-      monthLabels.push(`${m}월`);
+      monthLabels.push(String(m));
       prevMonth = m;
     } else {
       monthLabels.push(null);

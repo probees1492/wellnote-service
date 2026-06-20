@@ -28,10 +28,13 @@ export default function HomePage() {
 
   useEffect(() => {
     let alive = true;
+    // Start the grid from the user's signup date so brand-new accounts see a
+    // grid that begins on day 1 rather than 364 days of empty cells.
+    const signupDate = user?.createdAt?.slice(0, 10);
     (async () => {
       try {
         const [g, b] = await Promise.all([
-          api.activityGrid(),
+          api.activityGrid(signupDate),
           api.creditBalance(),
         ]);
         if (!alive) return;
@@ -46,7 +49,7 @@ export default function HomePage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [user?.createdAt]);
 
   return (
     <div className="flex flex-col gap-6">
