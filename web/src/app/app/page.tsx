@@ -3,12 +3,20 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { ArrowRight, Sparkles } from "lucide-react";
+
 import { ActivityGrid } from "@/components/memo/ActivityGrid";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { api, type ActivityGrid as GridT } from "@/lib/api";
-import { todayKst } from "@/lib/time";
 import { useAuth } from "@/lib/auth-store";
+import { todayKst } from "@/lib/time";
 
 export default function HomePage() {
   const router = useRouter();
@@ -29,9 +37,10 @@ export default function HomePage() {
         if (!alive) return;
         setGrid(g);
         setBalance(b.balance);
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (!alive) return;
-        setErr(e?.message ?? "데이터 로드 실패");
+        const msg = e instanceof Error ? e.message : "데이터 로드 실패";
+        setErr(msg);
       }
     })();
     return () => {
@@ -41,44 +50,52 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">
+          <h1 className="text-2xl font-semibold tracking-tight">
             안녕하세요, {user?.displayName} 님
           </h1>
-          <p className="text-sm text-text-muted">오늘 ({today})</p>
+          <p className="text-sm text-muted-foreground">오늘 ({today})</p>
         </div>
         <div
-          className="rounded-md border border-border bg-bg-secondary px-4 py-2 text-sm"
+          className="inline-flex items-center gap-2 rounded-md border bg-card px-4 py-2 text-sm shadow-sm"
           data-testid="credit-balance"
         >
-          크래딧:{" "}
-          <span className="font-semibold text-edge-blue">
-            {balance ?? "—"}
-          </span>
+          <Sparkles className="h-4 w-4 text-muted-foreground" aria-hidden />
+          크래딧 <span className="font-semibold">{balance ?? "—"}</span>
         </div>
       </div>
 
       <Card
-        className="cursor-pointer hover:shadow-xs border-l-[4px] border-l-edge-blue"
+        className="cursor-pointer ring-offset-background transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         onClick={() => router.push("/app/today")}
         data-testid="today-cta"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") router.push("/app/today");
+        }}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">오늘의 메모</h2>
-            <p className="text-sm text-text-muted">
-              지금 바로 오늘의 한 페이지를 시작해 보세요.
-            </p>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <CardTitle>오늘의 메모</CardTitle>
+              <CardDescription>
+                지금 바로 오늘의 한 페이지를 시작해 보세요.
+              </CardDescription>
+            </div>
+            <Button>
+              시작하기
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="primary">시작하기</Button>
-        </div>
+        </CardHeader>
       </Card>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">활동 그리드</h2>
+        <h2 className="text-lg font-semibold tracking-tight">활동 그리드</h2>
         {err ? (
-          <div className="rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
             {err}
           </div>
         ) : null}
@@ -94,7 +111,7 @@ export default function HomePage() {
 
       <div className="flex justify-end">
         <Link href="/app/search">
-          <Button variant="secondary">검색</Button>
+          <Button variant="outline">검색</Button>
         </Link>
       </div>
     </div>

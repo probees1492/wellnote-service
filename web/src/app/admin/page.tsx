@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api, type AdminUserRow } from "@/lib/api";
 
 export default function AdminDashboard() {
@@ -18,8 +20,9 @@ export default function AdminDashboard() {
         const r = await api.adminListUsers({ q });
         if (!alive) return;
         setRows(r.items);
-      } catch (e: any) {
-        setErr(e?.message ?? "사용자 목록을 불러오지 못했습니다.");
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "사용자 목록을 불러오지 못했습니다.";
+        setErr(msg);
       }
     })();
     return () => {
@@ -29,56 +32,63 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Admin 대시보드</h1>
-      <Input
-        id="admin-q"
-        label="이메일로 검색"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-      />
+      <h1 className="text-2xl font-semibold tracking-tight">Admin 대시보드</h1>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="admin-q">이메일로 검색</Label>
+        <Input
+          id="admin-q"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </div>
       {err ? (
-        <div className="rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           {err}
         </div>
       ) : null}
       <Card>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-text-muted">
-              <th className="py-2">이메일</th>
-              <th>이름</th>
-              <th>크래딧</th>
-              <th>역할</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-6 text-center text-text-muted">
-                  사용자가 없습니다.
-                </td>
+        <CardContent className="p-0">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-muted-foreground">
+                <th className="px-4 py-3 font-medium">이메일</th>
+                <th className="px-4 py-3 font-medium">이름</th>
+                <th className="px-4 py-3 font-medium">크래딧</th>
+                <th className="px-4 py-3 font-medium">역할</th>
+                <th className="px-4 py-3" />
               </tr>
-            ) : (
-              rows.map((u) => (
-                <tr key={u.id} className="border-t border-border">
-                  <td className="py-2">{u.email}</td>
-                  <td>{u.displayName}</td>
-                  <td>{u.creditBalance}</td>
-                  <td>{u.role ?? "user"}</td>
-                  <td>
-                    <Link
-                      href={`/admin/users?id=${u.id}`}
-                      className="text-edge-blue underline"
-                    >
-                      상세
-                    </Link>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="py-8 text-center text-muted-foreground"
+                  >
+                    사용자가 없습니다.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                rows.map((u) => (
+                  <tr key={u.id} className="border-t">
+                    <td className="px-4 py-3">{u.email}</td>
+                    <td className="px-4 py-3">{u.displayName}</td>
+                    <td className="px-4 py-3">{u.creditBalance}</td>
+                    <td className="px-4 py-3">{u.role ?? "user"}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/users?id=${u.id}`}
+                        className="font-medium underline"
+                      >
+                        상세
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </CardContent>
       </Card>
     </div>
   );

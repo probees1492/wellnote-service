@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { api, type MemoWithBody } from "@/lib/api";
 import { todayKst } from "@/lib/time";
 
@@ -26,9 +29,10 @@ export default function TodayPage() {
         setMemo(m);
         setBody(m.body ?? "");
         latestBodyRef.current = m.body ?? "";
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (!alive) return;
-        setErr(e?.message ?? "메모를 불러오지 못했습니다.");
+        const msg = e instanceof Error ? e.message : "메모를 불러오지 못했습니다.";
+        setErr(msg);
       }
     })();
     return () => {
@@ -36,7 +40,7 @@ export default function TodayPage() {
     };
   }, []);
 
-  async function save(force = false) {
+  async function save() {
     if (!memo) return;
     setSaveState("saving");
     try {
@@ -47,9 +51,10 @@ export default function TodayPage() {
       const mm = String(t.getMinutes()).padStart(2, "0");
       setSavedAt(`${hh}:${mm}`);
       setSaveState("saved");
-    } catch (e: any) {
+    } catch (e: unknown) {
       setSaveState("error");
-      setErr(e?.message ?? "저장 실패");
+      const msg = e instanceof Error ? e.message : "저장 실패";
+      setErr(msg);
     }
   }
 
@@ -72,44 +77,51 @@ export default function TodayPage() {
     };
   }, []);
 
+  const saveLabel =
+    saveState === "saving"
+      ? "저장 중..."
+      : saveState === "saved"
+        ? `저장됨 · ${savedAt ?? ""}`
+        : saveState === "error"
+          ? "저장 실패. 재시도"
+          : "대기 중";
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">{today}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{today}</h1>
         <div
-          className="text-xs text-text-muted"
+          className="text-sm text-muted-foreground"
           data-testid="save-state"
           data-state={saveState}
         >
-          {saveState === "saving"
-            ? "저장 중..."
-            : saveState === "saved"
-            ? `저장됨 · ${savedAt ?? ""}`
-            : saveState === "error"
-            ? "저장 실패. 재시도"
-            : "대기 중"}
+          {saveLabel}
         </div>
       </div>
       {err ? (
-        <div className="rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           {err}
         </div>
       ) : null}
-      <textarea
-        value={body}
-        onChange={(e) => handleChange(e.target.value)}
-        onBlur={() => save(true)}
-        disabled={!memo}
-        placeholder={
-          memo
-            ? "오늘 어떤 일이 있었나요? 마크다운으로 자유롭게 작성하세요."
-            : "메모를 불러오는 중..."
-        }
-        className="editor-focus-edge min-h-[400px] w-full rounded-md border border-border bg-bg-primary p-4 text-base text-text-primary leading-relaxed focus:shadow-focus disabled:opacity-50"
-        data-testid="memo-editor"
-        data-ready={memo ? "true" : "false"}
-      />
-      <div className="flex items-center justify-end text-xs text-text-muted">
+      <Card>
+        <CardContent className="p-0">
+          <Textarea
+            value={body}
+            onChange={(e) => handleChange(e.target.value)}
+            onBlur={() => save()}
+            disabled={!memo}
+            placeholder={
+              memo
+                ? "오늘 어떤 일이 있었나요? 마크다운으로 자유롭게 작성하세요."
+                : "메모를 불러오는 중..."
+            }
+            className="min-h-[420px] resize-y rounded-lg border-0 p-6 text-base leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0"
+            data-testid="memo-editor"
+            data-ready={memo ? "true" : "false"}
+          />
+        </CardContent>
+      </Card>
+      <div className="flex items-center justify-end text-sm text-muted-foreground">
         <span data-testid="char-count">{body.length}자</span>
         <span className="mx-2">·</span>
         <span>최대 100,000자</span>

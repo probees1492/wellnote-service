@@ -3,9 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-store";
 
 export default function SignupPage() {
@@ -33,102 +41,112 @@ export default function SignupPage() {
     try {
       await signup(email, password, displayName || undefined);
       router.push("/app");
-    } catch (e: any) {
-      setError(e?.message ?? "가입에 실패했습니다.");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "가입에 실패했습니다.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-bg-secondary py-16 px-6">
-      <div className="mx-auto w-full max-w-md">
+    <main className="flex min-h-screen items-center justify-center bg-muted/40 px-6 py-16">
+      <div className="w-full max-w-md">
         <Card>
-          <h1 className="text-2xl font-bold text-text-primary text-center">
-            WellNote 가입
-          </h1>
-          <p className="mt-2 text-sm text-text-muted text-center">
-            매일의 기록을 시작해 보세요.
-          </p>
-          <form
-            onSubmit={onSubmit}
-            className="mt-6 flex flex-col gap-4"
-            aria-label="signup-form"
-          >
-            <Input
-              id="email"
-              label="이메일"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              data-testid="signup-email"
-            />
-            <Input
-              id="password"
-              label="비밀번호"
-              type="password"
-              required
-              helper="8자 이상, 영문/숫자/특수문자 중 2종 이상"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              data-testid="signup-password"
-            />
-            <Input
-              id="confirm"
-              label="비밀번호 확인"
-              type="password"
-              required
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              data-testid="signup-confirm"
-            />
-            <Input
-              id="displayName"
-              label="표시 이름 (선택)"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              data-testid="signup-displayname"
-            />
-            {error ? (
-              <div
-                className="rounded-md border border-danger/50 bg-danger/10 px-3 py-2 text-sm text-danger"
-                data-testid="signup-error"
-              >
-                {error}
-              </div>
-            ) : null}
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              disabled={loading}
-              data-testid="signup-submit"
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">WellNote 가입</CardTitle>
+            <CardDescription>매일의 기록을 시작해 보세요.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={onSubmit}
+              className="flex flex-col gap-4"
+              aria-label="signup-form"
             >
-              {loading ? "가입 중..." : "가입하기"}
-            </Button>
-          </form>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="email">이메일</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  data-testid="signup-email"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="password">비밀번호</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  data-testid="signup-password"
+                />
+                <span className="text-xs text-muted-foreground">
+                  8자 이상, 영문/숫자/특수문자 중 2종 이상
+                </span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="confirm">비밀번호 확인</Label>
+                <Input
+                  id="confirm"
+                  type="password"
+                  required
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  data-testid="signup-confirm"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="displayName">표시 이름 (선택)</Label>
+                <Input
+                  id="displayName"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  data-testid="signup-displayname"
+                />
+              </div>
+              {error ? (
+                <div
+                  className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  data-testid="signup-error"
+                >
+                  {error}
+                </div>
+              ) : null}
+              <Button
+                type="submit"
+                size="lg"
+                disabled={loading}
+                data-testid="signup-submit"
+              >
+                {loading ? "가입 중..." : "가입하기"}
+              </Button>
+            </form>
 
-          <div className="mt-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-text-muted">또는</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-          <div className="mt-4 flex flex-col gap-2">
-            <Button variant="secondary" size="md" disabled>
-              Google로 계속하기 (Coming soon)
-            </Button>
-            <Button variant="secondary" size="md" disabled>
-              Apple로 계속하기 (Coming soon)
-            </Button>
-          </div>
+            <div className="mt-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">또는</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <div className="mt-4 flex flex-col gap-2">
+              <Button variant="outline" disabled>
+                Google로 계속하기 (Coming soon)
+              </Button>
+              <Button variant="outline" disabled>
+                Apple로 계속하기 (Coming soon)
+              </Button>
+            </div>
 
-          <p className="mt-6 text-center text-sm text-text-muted">
-            이미 계정이 있으신가요?{" "}
-            <Link href="/login" className="text-edge-blue underline">
-              로그인
-            </Link>
-          </p>
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              이미 계정이 있으신가요?{" "}
+              <Link href="/login" className="font-medium text-foreground underline">
+                로그인
+              </Link>
+            </p>
+          </CardContent>
         </Card>
       </div>
     </main>

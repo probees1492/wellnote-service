@@ -1,72 +1,105 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: ["class"],
   content: [
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{ts,tsx}",
+    "./src/components/**/*.{ts,tsx}",
+    "./src/lib/**/*.{ts,tsx}",
   ],
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: { "2xl": "1400px" },
+    },
     extend: {
       colors: {
-        bg: {
-          primary: "var(--bg-primary)",
-          secondary: "var(--bg-secondary)",
-          tertiary: "var(--bg-tertiary)",
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
-        edge: {
-          blue: "var(--edge-blue)",
-          "blue-hover": "var(--edge-blue-hover)",
-          "blue-soft": "var(--edge-blue-soft)",
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
-        text: {
-          primary: "var(--text-primary)",
-          secondary: "var(--text-secondary)",
-          muted: "var(--text-muted)",
-          "on-blue": "var(--text-on-blue)",
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
-        border: {
-          DEFAULT: "var(--border-default)",
-          strong: "var(--border-strong)",
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
-        danger: {
-          DEFAULT: "var(--danger)",
-          hover: "var(--danger-hover)",
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
         grid: {
-          empty: "var(--grid-empty)",
-          l1: "var(--grid-l1)",
-          l2: "var(--grid-l2)",
-          l3: "var(--grid-l3)",
-          l4: "var(--grid-l4)",
+          empty: "hsl(var(--grid-empty))",
+          l1: "hsl(var(--grid-l1))",
+          l2: "hsl(var(--grid-l2))",
+          l3: "hsl(var(--grid-l3))",
+          l4: "hsl(var(--grid-l4))",
         },
       },
       borderRadius: {
-        sm: "8px",
-        md: "12px",
-        lg: "16px",
-      },
-      boxShadow: {
-        xs: "0 1px 2px rgba(15, 23, 42, 0.04)",
-        sm: "0 2px 8px rgba(15, 23, 42, 0.06)",
-        md: "0 4px 16px rgba(15, 23, 42, 0.08)",
-        focus: "0 0 0 3px rgba(37, 99, 235, 0.25)",
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
         sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
           "Pretendard Variable",
           "Pretendard",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "system-ui",
           "Segoe UI",
           "Roboto",
           "Helvetica Neue",
           "Arial",
           "sans-serif",
         ],
-        mono: ["JetBrains Mono", "Menlo", "Consolas", "monospace"],
+        mono: [
+          "ui-monospace",
+          "SFMono-Regular",
+          "JetBrains Mono",
+          "Menlo",
+          "Consolas",
+          "monospace",
+        ],
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;

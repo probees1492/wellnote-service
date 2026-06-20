@@ -1,6 +1,6 @@
 "use client";
 
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 import type { ActivityCell, ActivityGrid as GridT } from "@/lib/api";
 
 const LEVEL_BG = [
@@ -29,14 +29,13 @@ export function ActivityGrid({
 }) {
   if (!grid) {
     return (
-      <div className="rounded-md border border-border bg-bg-secondary p-6 text-sm text-text-muted">
+      <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground shadow-sm">
         활동 그리드를 불러오는 중...
       </div>
     );
   }
 
   // Pack cells into 7-row columns (one column = 1 week, starting on Monday)
-  // Pad the first column with leading nulls so the first row corresponds to Monday.
   const cells = grid.cells;
   if (cells.length === 0) return null;
   const firstDow = dayOfWeekMondayFirst(cells[0].date);
@@ -59,7 +58,7 @@ export function ActivityGrid({
 
   return (
     <div
-      className="overflow-x-auto rounded-lg border border-border bg-bg-primary p-4"
+      className="overflow-x-auto rounded-lg border bg-card p-4 shadow-sm"
       data-testid="activity-grid"
     >
       <div className="flex gap-[3px]">
@@ -86,12 +85,12 @@ export function ActivityGrid({
                   }
                   data-date={cell.date}
                   data-level={cell.level}
-                  className={clsx(
-                    "h-3 w-3 rounded-[2px] cursor-pointer",
+                  className={cn(
+                    "h-3 w-3 cursor-pointer rounded-[2px]",
                     LEVEL_BG[cell.level],
                     isToday
-                      ? "ring-2 ring-edge-blue ring-offset-1"
-                      : "hover:outline hover:outline-1 hover:outline-edge-blue",
+                      ? "ring-2 ring-ring ring-offset-1 ring-offset-background"
+                      : "hover:outline hover:outline-1 hover:outline-ring",
                   )}
                 />
               );
@@ -99,12 +98,12 @@ export function ActivityGrid({
           </div>
         ))}
       </div>
-      <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
+      <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
         <span>적게</span>
         {[0, 1, 2, 3, 4].map((lv) => (
           <span
             key={lv}
-            className={clsx(
+            className={cn(
               "inline-block h-3 w-3 rounded-[2px]",
               LEVEL_BG[lv as 0 | 1 | 2 | 3 | 4],
             )}
