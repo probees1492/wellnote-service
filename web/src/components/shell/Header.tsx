@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { LogoLockup } from "@/components/brand/Logo";
+import { StreakBadge } from "@/components/streak/StreakBadge";
 
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
@@ -108,6 +109,7 @@ export function Header({ variant = "app", showAdminLink = false }: HeaderProps) 
       <div className="hidden lg:block" />
 
       <div className="flex items-center gap-1">
+        {variant === "app" ? <StreakBadge /> : null}
         <ThemeToggle />
         <UserMenu />
       </div>

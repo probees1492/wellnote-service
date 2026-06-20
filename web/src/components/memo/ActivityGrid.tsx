@@ -25,10 +25,18 @@ function monthOf(iso: string): number {
   return Number(iso.slice(5, 7));
 }
 
+function addDaysIsoLocal(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function ActivityGrid({
   grid,
   todayIso,
   signupDate,
+  streakLastDay,
+  streakCurrent,
   onCellClick,
 }: {
   grid: GridT | null;
@@ -36,6 +44,10 @@ export function ActivityGrid({
   /** ISO date (YYYY-MM-DD). Cells before this date render as a faded
    *  placeholder so brand-new accounts still see the full grid scaffold. */
   signupDate?: string;
+  /** Last KST day (YYYY-MM-DD) the user contributed to their streak. */
+  streakLastDay?: string | null;
+  /** Current streak length — used to compute the highlight start date. */
+  streakCurrent?: number;
   onCellClick?: (cell: ActivityCell) => void;
 }) {
   if (!grid) {
@@ -48,6 +60,15 @@ export function ActivityGrid({
 
   const cells = grid.cells;
   if (cells.length === 0) return null;
+
+  // Compute the inclusive streak window. The backend does not expose a
+  // "streakStartDate" so we derive it as `lastDay - (current - 1)`. When
+  // either piece is missing or current<=0 the window is disabled.
+  const streakStart =
+    streakLastDay && streakCurrent && streakCurrent > 0
+      ? addDaysIsoLocal(streakLastDay, -(streakCurrent - 1))
+      : null;
+  const streakEnd = streakStart ? streakLastDay : null;
   const firstDow = dayOfWeekMondayFirst(cells[0].date);
   const cols: (ActivityCell | null)[][] = [];
   let col: (ActivityCell | null)[] = Array.from(
@@ -132,6 +153,12 @@ export function ActivityGrid({
                   ? cell.date < signupDate
                   : false;
                 const isPlaceholder = isFuture || isPreSignup;
+                const isInStreak =
+                  !isPlaceholder &&
+                  streakStart != null &&
+                  streakEnd != null &&
+                  cell.date >= streakStart &&
+                  cell.date <= streakEnd;
                 return (
                   <button
                     key={ri}
@@ -151,6 +178,7 @@ export function ActivityGrid({
                     data-date={cell.date}
                     data-level={cell.level}
                     data-placeholder={isPlaceholder ? "true" : undefined}
+                    data-in-streak={isInStreak ? "true" : undefined}
                     className={cn(
                       "h-3 w-3 rounded-[2px]",
                       LEVEL_BG[cell.level],
@@ -159,6 +187,9 @@ export function ActivityGrid({
                         : "cursor-pointer",
                       isToday &&
                         "ring-2 ring-ring ring-offset-1 ring-offset-background",
+                      !isToday &&
+                        isInStreak &&
+                        "ring-1 ring-orange-400/60 ring-offset-0",
                       !isPlaceholder &&
                         !isToday &&
                         "hover:outline hover:outline-1 hover:outline-ring",

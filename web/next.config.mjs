@@ -19,6 +19,7 @@ const nextConfig = {
             { source: "/memos", destination: `${API_TARGET}/memos` },
             { source: "/activity/:path*", destination: `${API_TARGET}/activity/:path*` },
             { source: "/credit/:path*", destination: `${API_TARGET}/credit/:path*` },
+            { source: "/streak/:path*", destination: `${API_TARGET}/streak/:path*` },
             { source: "/admin/:path*", destination: `${API_TARGET}/admin/:path*` },
           ];
         },

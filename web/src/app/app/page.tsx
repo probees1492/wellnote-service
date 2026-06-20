@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 import { ActivityGrid } from "@/components/memo/ActivityGrid";
+import { MilestoneCelebration } from "@/components/streak/MilestoneCelebration";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { api, type ActivityGrid as GridT } from "@/lib/api";
+import { api, type ActivityGrid as GridT, type StreakStatus } from "@/lib/api";
 import { useAuth } from "@/lib/auth-store";
 import { addDaysIso, todayKst } from "@/lib/time";
 
@@ -23,6 +24,7 @@ export default function HomePage() {
   const user = useAuth((s) => s.user);
   const [grid, setGrid] = useState<GridT | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
+  const [streak, setStreak] = useState<StreakStatus | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const today = todayKst();
 
@@ -43,13 +45,15 @@ export default function HomePage() {
     const toArg = useAnchored ? windowEnd : undefined;
     (async () => {
       try {
-        const [g, b] = await Promise.all([
+        const [g, b, s] = await Promise.all([
           api.activityGrid(fromArg, toArg),
           api.creditBalance(),
+          api.streakStatus().catch(() => null),
         ]);
         if (!alive) return;
         setGrid(g);
         setBalance(b.balance);
+        if (s) setStreak(s);
       } catch (e: unknown) {
         if (!alive) return;
         const msg = e instanceof Error ? e.message : "데이터 로드 실패";
@@ -107,6 +111,24 @@ export default function HomePage() {
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold tracking-tight">활동 그리드</h2>
+        {streak ? (
+          <div
+            className="rounded-md border bg-card px-3 py-2 text-sm"
+            data-testid="streak-banner"
+          >
+            {streak.current > 0 ? (
+              <span className="text-orange-500">
+                <span aria-hidden>🔥</span>{" "}
+                <span className="font-semibold">{streak.current}일</span> 연속!
+              </span>
+            ) : (
+              <span className="text-muted-foreground">
+                <span aria-hidden>✍️</span> 오늘이 첫날입니다 — 메모를 시작해
+                보세요.
+              </span>
+            )}
+          </div>
+        ) : null}
         {err ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
             {err}
@@ -116,12 +138,15 @@ export default function HomePage() {
           grid={grid}
           todayIso={today}
           signupDate={user?.createdAt?.slice(0, 10)}
+          streakLastDay={streak?.lastDay ?? user?.streakLastDay ?? null}
+          streakCurrent={streak?.current ?? user?.streakCurrent ?? 0}
           onCellClick={(c) => {
             if (c.date === today) router.push("/app/today");
             else router.push(`/app/memo?date=${c.date}`);
           }}
         />
       </div>
+      <MilestoneCelebration status={streak} />
 
       <div className="flex justify-end">
         <Link href="/app/search">

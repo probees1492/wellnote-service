@@ -24,6 +24,14 @@ export interface ApiUser {
   emailVerifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Current consecutive-day streak (resets to 0 once freezes are exhausted). */
+  streakCurrent: number;
+  /** All-time longest streak achieved. */
+  streakLongest: number;
+  /** Number of "freeze" tokens available to absorb a missed day. */
+  streakFreezes: number;
+  /** Last KST day (YYYY-MM-DD) that contributed to the streak, or null. */
+  streakLastDay: string | null;
 }
 
 export interface ApiError extends Error {
@@ -304,6 +312,7 @@ export const api = {
     request<{ items: Memo[]; nextCursor: string | null }>(`/memos`),
   activityGrid: (from?: string, to?: string) =>
     request<ActivityGrid>(`/activity/grid`, { query: { from, to } }),
+  streakStatus: () => request<StreakStatus>("/streak/status"),
   creditBalance: () => request<{ balance: number }>("/credit/balance"),
   creditTransactions: () =>
     request<{ items: CreditTx[]; nextCursor: string | null }>(
@@ -367,6 +376,16 @@ export interface ActivityGrid {
   from: string;
   to: string;
   cells: ActivityCell[];
+}
+
+/** Streak status payload returned by `GET /streak/status`. */
+export interface StreakStatus {
+  current: number;
+  longest: number;
+  freezes: number;
+  lastDay: string | null;
+  nextMilestone: number | null;
+  daysToNextMilestone: number | null;
 }
 
 export interface CreditTx {
