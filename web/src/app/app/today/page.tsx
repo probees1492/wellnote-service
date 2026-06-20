@@ -19,6 +19,7 @@ export default function TodayPage() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [sttNotice, setSttNotice] = useState<string | null>(null);
+  const [interim, setInterim] = useState<string>("");
   const debounceRef = useRef<number | null>(null);
   const latestBodyRef = useRef<string>("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -79,13 +80,15 @@ export default function TodayPage() {
   const handleTranscript = useCallback(
     (text: string) => {
       const trimmed = text.trim();
+      // Final result arrived — clear the live interim preview.
+      setInterim("");
       if (!trimmed) return;
       const textarea = textareaRef.current;
       const current = latestBodyRef.current;
       const cursor = textarea
         ? (textarea.selectionStart ?? current.length)
         : current.length;
-      const { value, nextCursor } = insertAtCursor(current, cursor, trimmed);
+      const { value, nextCursor } = insertAtCursor(current, cursor, trimmed + " ");
       latestBodyRef.current = value;
       setBody(value);
       // Move caret to the end of the just-inserted text after React commits.
@@ -104,8 +107,13 @@ export default function TodayPage() {
     [scheduleSave],
   );
 
+  const handleInterim = useCallback((text: string) => {
+    setInterim(text);
+  }, []);
+
   const handleSttError = useCallback((message: string) => {
     setSttNotice(message);
+    setInterim("");
   }, []);
 
   // Clear the STT inline notice after 4s.
@@ -160,9 +168,20 @@ export default function TodayPage() {
       ) : null}
       <Card>
         <CardContent className="p-0">
-          <div className="flex items-center justify-end px-4 pt-3">
+          <div className="flex items-center justify-between gap-3 px-4 pt-3">
+            {interim ? (
+              <span
+                className="flex-1 truncate font-serif text-sm italic text-muted-foreground"
+                data-testid="stt-interim"
+              >
+                {interim}
+              </span>
+            ) : (
+              <span className="flex-1" />
+            )}
             <SpeechToTextButton
               onTranscript={handleTranscript}
+              onInterim={handleInterim}
               onError={handleSttError}
               disabled={!memo}
             />
