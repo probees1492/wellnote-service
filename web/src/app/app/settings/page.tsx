@@ -13,6 +13,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { api, type CreditTx } from "@/lib/api";
 import { useAuth } from "@/lib/auth-store";
+import {
+  DEFAULT_PREFS,
+  type EditorPrefs,
+  type GridStyle,
+  loadEditorPrefs,
+  saveEditorPrefs,
+} from "@/lib/editor-prefs";
+import { cn } from "@/lib/utils";
 
 const REMINDER_KEY = "wn:reminderOptIn";
 
@@ -25,6 +33,19 @@ export default function SettingsPage() {
   const [notifPermission, setNotifPermission] = useState<
     NotificationPermission | "unsupported"
   >("default");
+  const [editorPrefs, setEditorPrefs] = useState<EditorPrefs>(DEFAULT_PREFS);
+
+  useEffect(() => {
+    setEditorPrefs(loadEditorPrefs());
+  }, []);
+
+  function updatePrefs(patch: Partial<EditorPrefs>) {
+    setEditorPrefs((prev) => {
+      const next = { ...prev, ...patch };
+      saveEditorPrefs(next);
+      return next;
+    });
+  }
 
   // Hydrate local preference + browser permission on mount.
   useEffect(() => {
@@ -141,6 +162,115 @@ export default function SettingsPage() {
                     : "브라우저 알림 허용 요청을 처리하는 중입니다."}
             </p>
           ) : null}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>에디터</CardTitle>
+          <CardDescription>
+            원고지 스타일과 글쓰기 효과를 취향대로 조정하세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent
+          className="flex flex-col gap-4 text-sm"
+          data-testid="editor-settings"
+        >
+          <div className="flex flex-col gap-2">
+            <span className="font-medium">원고지 스타일</span>
+            <div
+              className="grid grid-cols-3 gap-2"
+              role="radiogroup"
+              aria-label="원고지 스타일"
+            >
+              {(
+                [
+                  { v: "manuscript", label: "정통 200자" },
+                  { v: "lines", label: "가로선" },
+                  { v: "dots", label: "점 격자" },
+                ] as { v: GridStyle; label: string }[]
+              ).map((opt) => {
+                const active = editorPrefs.gridStyle === opt.v;
+                return (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => updatePrefs({ gridStyle: opt.v })}
+                    data-testid={`grid-style-${opt.v}`}
+                    className={cn(
+                      "rounded-md border px-3 py-2 text-sm transition-colors",
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background hover:bg-accent",
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <Label
+            htmlFor="pref-typewriter"
+            className="flex cursor-pointer items-center justify-between gap-3"
+          >
+            <span>타이프라이터 모드 (현재 줄을 중앙에)</span>
+            <Checkbox
+              id="pref-typewriter"
+              checked={editorPrefs.typewriter}
+              onCheckedChange={(v) => updatePrefs({ typewriter: v })}
+              data-testid="pref-typewriter"
+            />
+          </Label>
+          <Label
+            htmlFor="pref-indent"
+            className="flex cursor-pointer items-center justify-between gap-3"
+          >
+            <span>첫 줄 들여쓰기</span>
+            <Checkbox
+              id="pref-indent"
+              checked={editorPrefs.firstLineIndent}
+              onCheckedChange={(v) => updatePrefs({ firstLineIndent: v })}
+              data-testid="pref-indent"
+            />
+          </Label>
+          <Label
+            htmlFor="pref-ink"
+            className="flex cursor-pointer items-center justify-between gap-3"
+          >
+            <span>잉크 커서</span>
+            <Checkbox
+              id="pref-ink"
+              checked={editorPrefs.inkCursor}
+              onCheckedChange={(v) => updatePrefs({ inkCursor: v })}
+              data-testid="pref-ink"
+            />
+          </Label>
+          <Label
+            htmlFor="pref-pen"
+            className="flex cursor-pointer items-center justify-between gap-3"
+          >
+            <span>펜 사각 소리</span>
+            <Checkbox
+              id="pref-pen"
+              checked={editorPrefs.penSound}
+              onCheckedChange={(v) => updatePrefs({ penSound: v })}
+              data-testid="pref-pen"
+            />
+          </Label>
+          <Label
+            htmlFor="pref-seal"
+            className="flex cursor-pointer items-center justify-between gap-3"
+          >
+            <span>봉인 카운트다운 표시</span>
+            <Checkbox
+              id="pref-seal"
+              checked={editorPrefs.sealCountdown}
+              onCheckedChange={(v) => updatePrefs({ sealCountdown: v })}
+              data-testid="pref-seal"
+            />
+          </Label>
         </CardContent>
       </Card>
       <Card>

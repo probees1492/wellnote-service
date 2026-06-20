@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, type MemoWithBody } from "@/lib/api";
+import { loadEditorPrefs } from "@/lib/editor-prefs";
 import { todayKst } from "@/lib/time";
+import { cn } from "@/lib/utils";
 
 function MemoByDateInner() {
   const params = useSearchParams();
@@ -19,6 +21,14 @@ function MemoByDateInner() {
   const [memo, setMemo] = useState<MemoWithBody | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [errCode, setErrCode] = useState<string | undefined>(undefined);
+  const [gridStyle, setGridStyle] = useState<string>("manuscript");
+  const [firstLineIndent, setFirstLineIndent] = useState<boolean>(true);
+
+  useEffect(() => {
+    const prefs = loadEditorPrefs();
+    setGridStyle(prefs.gridStyle);
+    setFirstLineIndent(prefs.firstLineIndent);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -83,10 +93,22 @@ function MemoByDateInner() {
         <h1 className="text-2xl font-semibold tracking-tight">{memo.dateKst}</h1>
         <Badge variant="secondary">Readonly</Badge>
       </div>
-      <Card>
-        <CardContent className="p-6">
+      <Card className="border-0 bg-transparent shadow-none">
+        <CardContent
+          className={cn(
+            "wn-paper wn-paper-readonly p-6",
+            gridStyle === "lines"
+              ? "wn-paper-lines"
+              : gridStyle === "dots"
+                ? "wn-paper-dots"
+                : "wn-paper-manuscript",
+          )}
+        >
           <article
-            className="markdown-body font-serif leading-loose"
+            className={cn(
+              "markdown-body font-serif text-base leading-[2rem] tracking-[0.02em]",
+              firstLineIndent && "wn-first-line-indent",
+            )}
             data-testid="memo-readonly"
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{memo.body}</ReactMarkdown>

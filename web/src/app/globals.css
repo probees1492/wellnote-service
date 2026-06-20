@@ -136,3 +136,182 @@
 .markdown-body blockquote {
   @apply border-l-2 border-border pl-3 my-3 text-muted-foreground;
 }
+
+/* ------------------------------------------------------------------ */
+/* Manuscript editor — paper, grids, ink cursor, sealing stamp, etc.  */
+/* ------------------------------------------------------------------ */
+
+/* Paper card: warm cream in light, deep cocoa in dark, with a real
+   "page resting on a desk" shadow.                                    */
+.wn-paper {
+  background-color: #fbf6e8;
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1px rgba(120, 96, 60, 0.08);
+  border-radius: 14px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.dark .wn-paper {
+  background-color: #3a332a;
+  box-shadow:
+    0 2px 20px rgba(0, 0, 0, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    inset 0 0 60px rgba(255, 220, 160, 0.025),
+    inset 0 0 0 1px rgba(255, 220, 160, 0.06);
+}
+
+/* Manuscript paper: 200자 grid. The textarea sits on top with a
+   transparent background; the cells live on the wrapping `.wn-paper`
+   via a background-image of two crossed linear-gradients sized to 32px.
+*/
+.wn-paper-manuscript {
+  --wn-cell: 32px;
+  --wn-line: rgba(120, 96, 60, 0.18);
+  background-image:
+    linear-gradient(to right, var(--wn-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--wn-line) 1px, transparent 1px);
+  background-size: var(--wn-cell) var(--wn-cell);
+  background-position: 0 0;
+}
+.dark .wn-paper-manuscript {
+  --wn-line: rgba(255, 220, 160, 0.10);
+}
+
+/* Simple horizontal-only ruled paper. */
+.wn-paper-lines {
+  --wn-cell: 32px;
+  --wn-line: rgba(120, 96, 60, 0.18);
+  background-image:
+    linear-gradient(to bottom, var(--wn-line) 1px, transparent 1px);
+  background-size: 100% var(--wn-cell);
+}
+.dark .wn-paper-lines {
+  --wn-line: rgba(255, 220, 160, 0.10);
+}
+
+/* Dotted paper. */
+.wn-paper-dots {
+  --wn-cell: 24px;
+  --wn-dot: rgba(120, 96, 60, 0.22);
+  background-image: radial-gradient(
+    circle,
+    var(--wn-dot) 1px,
+    transparent 1.4px
+  );
+  background-size: var(--wn-cell) var(--wn-cell);
+}
+.dark .wn-paper-dots {
+  --wn-dot: rgba(255, 220, 160, 0.14);
+}
+
+/* The textarea inherits the paper background through transparency, and
+   forces the cell-aligned line-height so 명조체 글자가 격자에 정렬됩니다. */
+.wn-paper-textarea {
+  color: hsl(var(--foreground));
+  background-clip: padding-box;
+  /* line-height kept in sync with --wn-cell so each line occupies 1 row. */
+}
+.dark .wn-paper-textarea {
+  color: #f4eddd;
+}
+.dark .wn-paper-textarea::placeholder {
+  color: rgba(244, 237, 221, 0.45);
+}
+
+/* First-line / first-paragraph indent — Korean diary convention. */
+.wn-first-line-indent {
+  text-indent: 2em;
+}
+
+/* Typewriter mode: fade out lines far from the caret using a vertical
+   linear-gradient mask. The active band sits centred in the viewport
+   thanks to the smooth-scroll handler in ManuscriptEditor.            */
+.wn-typewriter-mask {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 1) 40%,
+    rgba(0, 0, 0, 1) 60%,
+    rgba(0, 0, 0, 0.25)
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 1) 40%,
+    rgba(0, 0, 0, 1) 60%,
+    rgba(0, 0, 0, 0.25)
+  );
+}
+
+/* Ink dot fade-out keyframes (used by InkCursorEffect spans). */
+@keyframes wn-ink-fade {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Sealing stamp: rotate + scale + opacity in ~800ms. */
+@keyframes wn-stamp {
+  0% {
+    transform: scale(2.2) rotate(-18deg);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.05) rotate(-12deg);
+    opacity: 0.95;
+  }
+  45% {
+    transform: scale(0.96) rotate(-12deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-12deg);
+    opacity: 0.95;
+  }
+}
+
+/* Readonly view: thinner paper feel (no shadow, gentler grid). */
+.wn-paper-readonly {
+  background-color: #fbf6e8;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 8px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1px rgba(120, 96, 60, 0.08);
+}
+.dark .wn-paper-readonly {
+  background-color: #3a332a;
+  box-shadow:
+    0 1px 10px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 220, 160, 0.05);
+}
+.wn-paper-readonly .markdown-body {
+  color: hsl(var(--foreground));
+}
+.dark .wn-paper-readonly .markdown-body {
+  color: #f4eddd;
+}
+.wn-paper-readonly .markdown-body p:first-of-type,
+.wn-paper-readonly .markdown-body p {
+  text-indent: 2em;
+}
+
+/* Reduced-motion fallback. */
+@media (prefers-reduced-motion: reduce) {
+  .wn-paper,
+  .wn-paper-textarea,
+  .wn-typewriter-mask {
+    transition: none !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+}

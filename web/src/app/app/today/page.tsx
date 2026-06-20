@@ -1,10 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import {
+  ManuscriptEditor,
+  type ManuscriptEditorHandle,
+} from "@/components/editor/ManuscriptEditor";
 import { SpeechToTextButton } from "@/components/editor/SpeechToTextButton";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { api, type MemoWithBody } from "@/lib/api";
 import { insertAtCursor } from "@/lib/speech-recognition";
 import { todayKst } from "@/lib/time";
@@ -13,6 +17,7 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 
 export default function TodayPage() {
   const today = todayKst();
+  const router = useRouter();
   const [memo, setMemo] = useState<MemoWithBody | null>(null);
   const [body, setBody] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -22,7 +27,7 @@ export default function TodayPage() {
   const [interim, setInterim] = useState<string>("");
   const debounceRef = useRef<number | null>(null);
   const latestBodyRef = useRef<string>("");
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const editorRef = useRef<ManuscriptEditorHandle | null>(null);
 
   // Load today memo
   useEffect(() => {
@@ -83,7 +88,7 @@ export default function TodayPage() {
       // Final result arrived — clear the live interim preview.
       setInterim("");
       if (!trimmed) return;
-      const textarea = textareaRef.current;
+      const textarea = editorRef.current?.textarea ?? null;
       const current = latestBodyRef.current;
       const cursor = textarea
         ? (textarea.selectionStart ?? current.length)
@@ -132,6 +137,28 @@ export default function TodayPage() {
     };
   }, []);
 
+  // Once the page seals at KST midnight, force a save (best effort) and
+  // navigate to the readonly view for today's now-sealed memo.
+  const handleSealed = useCallback(() => {
+    // Best-effort save then reload to /app/memo?date=...
+    const finish = () => {
+      const date = todayKst();
+      // After midnight, "today" in KST is the next day — but the memo we
+      // were just editing is the *previous* KST date. Use memo.dateKst if
+      // available; fall back to navigating to /app which redirects.
+      if (memo?.dateKst) {
+        router.replace(`/app/memo?date=${encodeURIComponent(memo.dateKst)}`);
+      } else {
+        router.replace(`/app/memo?date=${encodeURIComponent(date)}`);
+      }
+    };
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    save().finally(finish);
+  }, [memo?.dateKst, router, save]);
+
   const saveLabel =
     saveState === "saving"
       ? "저장 중..."
@@ -166,9 +193,9 @@ export default function TodayPage() {
           {sttNotice}
         </div>
       ) : null}
-      <Card>
+      <Card className="border-0 bg-transparent shadow-none">
         <CardContent className="p-0">
-          <div className="flex items-center justify-between gap-3 px-4 pt-3">
+          <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-1">
             {interim ? (
               <span
                 className="flex-1 truncate font-serif text-sm italic text-muted-foreground"
@@ -186,18 +213,18 @@ export default function TodayPage() {
               disabled={!memo}
             />
           </div>
-          <Textarea
-            ref={textareaRef}
+          <ManuscriptEditor
+            ref={editorRef}
             value={body}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={handleChange}
             onBlur={() => save()}
+            onSealed={handleSealed}
             disabled={!memo}
             placeholder={
               memo
-                ? "오늘 어떤 일이 있었나요? 마크다운으로 자유롭게 작성하세요."
+                ? "오늘 어떤 일이 있었나요? 한 칸씩 정성껏 적어 보세요."
                 : "메모를 불러오는 중..."
             }
-            className="min-h-[420px] resize-y rounded-lg border-0 p-6 pt-3 font-serif text-base leading-loose focus-visible:ring-0 focus-visible:ring-offset-0"
             data-testid="memo-editor"
             data-ready={memo ? "true" : "false"}
           />
