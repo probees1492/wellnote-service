@@ -70,6 +70,10 @@ interface MemUser {
   isSuspended: boolean;
   createdAt: string;
   updatedAt: string;
+  streakCurrent: number;
+  streakLongest: number;
+  streakFreezes: number;
+  streakLastDay: string | null;
 }
 
 const memUsers = new Map<string, MemUser>();
@@ -90,6 +94,10 @@ function safeUser(u: {
   isSuspended: boolean;
   createdAt: string;
   updatedAt: string;
+  streakCurrent?: number;
+  streakLongest?: number;
+  streakFreezes?: number;
+  streakLastDay?: string | null;
 }) {
   return {
     id: u.id,
@@ -101,6 +109,10 @@ function safeUser(u: {
     isSuspended: u.isSuspended,
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
+    streakCurrent: u.streakCurrent ?? 0,
+    streakLongest: u.streakLongest ?? 0,
+    streakFreezes: u.streakFreezes ?? 1,
+    streakLastDay: u.streakLastDay ?? null,
   };
 }
 
@@ -216,6 +228,10 @@ authRoutes.post("/signup", async (c) => {
     isSuspended: false,
     createdAt: now,
     updatedAt: now,
+    streakCurrent: 0,
+    streakLongest: 0,
+    streakFreezes: 1,
+    streakLastDay: null,
   };
   memUsers.set(user.id, user);
   memUsersByEmail.set(email, user);
@@ -505,6 +521,10 @@ async function upsertSocialUser(
   isSuspended: boolean;
   createdAt: string;
   updatedAt: string;
+  streakCurrent: number;
+  streakLongest: number;
+  streakFreezes: number;
+  streakLastDay: string | null;
 }> {
   const email = input.email.toLowerCase();
 
@@ -562,6 +582,10 @@ async function upsertSocialUser(
       isSuspended: false,
       createdAt: now,
       updatedAt: now,
+      streakCurrent: 0,
+      streakLongest: 0,
+      streakFreezes: 1,
+      streakLastDay: null,
     };
     memUsers.set(user.id, user);
     memUsersByEmail.set(email, user);

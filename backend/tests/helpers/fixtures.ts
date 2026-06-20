@@ -18,6 +18,10 @@ export function makeUser(overrides: Partial<User> = {}): User {
     isSuspended: false,
     createdAt: "2026-06-01T00:00:00.000Z",
     updatedAt: "2026-06-01T00:00:00.000Z",
+    streakCurrent: 0,
+    streakLongest: 0,
+    streakFreezes: 1,
+    streakLastDay: null,
     ...overrides,
   };
 }

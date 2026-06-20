@@ -11,6 +11,14 @@ export interface User {
   isSuspended: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Current consecutive-day writing streak (KST). */
+  streakCurrent: number;
+  /** All-time longest streak length. */
+  streakLongest: number;
+  /** Remaining "freeze" tokens that protect the streak when a day is missed. */
+  streakFreezes: number;
+  /** KST date string of the most recent day counted toward the streak. */
+  streakLastDay: string | null;
 }
 
 export type SocialProvider = "email" | "google" | "apple";

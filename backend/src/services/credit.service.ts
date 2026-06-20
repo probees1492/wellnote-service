@@ -3,8 +3,6 @@ import {
   type CreditReason,
   SIGNUP_BONUS_AMOUNT,
   READONLY_PENALTY_AMOUNT,
-  STREAK_BONUS_AMOUNT,
-  STREAK_MIN_CHARS,
 } from "../domain/credit";
 import type { CreditRepo } from "../repositories/credit.repo";
 import type { UserRepo } from "../repositories/user.repo";
@@ -23,12 +21,6 @@ export interface CreditService {
     userId: string;
     memoId: string;
   }): Promise<{ delta: number; balanceAfter: number }>;
-  evaluateAndApplyStreakBonus(opts: {
-    userId: string;
-    yesterdayChars: number;
-    dayBeforeChars: number;
-    referenceMemoId?: string;
-  }): Promise<{ delta: number; balanceAfter: number } | null>;
   adminGrant(opts: {
     userId: string;
     amount: number;
@@ -222,28 +214,6 @@ export class DefaultCreditService implements CreditService {
       delta: -READONLY_PENALTY_AMOUNT,
       reason: "READONLY_TRANSITION",
       referenceId: opts.memoId,
-      skipIfSuspended: true,
-    });
-    return { delta: r.delta, balanceAfter: r.balanceAfter };
-  }
-
-  async evaluateAndApplyStreakBonus(opts: {
-    userId: string;
-    yesterdayChars: number;
-    dayBeforeChars: number;
-    referenceMemoId?: string;
-  }): Promise<{ delta: number; balanceAfter: number } | null> {
-    if (
-      opts.yesterdayChars < STREAK_MIN_CHARS ||
-      opts.dayBeforeChars < STREAK_MIN_CHARS
-    ) {
-      return null;
-    }
-    const r = await this.applyDelta({
-      userId: opts.userId,
-      delta: STREAK_BONUS_AMOUNT,
-      reason: "STREAK_BONUS",
-      referenceId: opts.referenceMemoId ?? null,
       skipIfSuspended: true,
     });
     return { delta: r.delta, balanceAfter: r.balanceAfter };

@@ -18,12 +18,20 @@ export interface UpdateUserInput {
   isSuspended?: boolean;
 }
 
+export interface UpdateStreakInput {
+  streakCurrent?: number;
+  streakLongest?: number;
+  streakFreezes?: number;
+  streakLastDay?: string | null;
+}
+
 export interface UserRepo {
   create(input: CreateUserInput): Promise<User>;
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   update(id: string, patch: UpdateUserInput): Promise<User>;
   adjustCreditBalance(id: string, delta: number): Promise<number>;
+  updateStreak(id: string, patch: UpdateStreakInput): Promise<User>;
   list(opts: {
     cursor?: string;
     limit?: number;
@@ -57,6 +65,10 @@ interface UserRow {
   is_suspended: number;
   created_at: string;
   updated_at: string;
+  streak_current?: number | null;
+  streak_longest?: number | null;
+  streak_freezes?: number | null;
+  streak_last_day?: string | null;
 }
 
 interface SocialRow {
@@ -79,6 +91,10 @@ function mapUser(row: UserRow): User {
     isSuspended: row.is_suspended === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    streakCurrent: row.streak_current ?? 0,
+    streakLongest: row.streak_longest ?? 0,
+    streakFreezes: row.streak_freezes ?? 1,
+    streakLastDay: row.streak_last_day ?? null,
   };
 }
 
@@ -174,6 +190,47 @@ export class D1UserRepo implements UserRepo {
     if (patch.isSuspended !== undefined) {
       sets.push("is_suspended = ?");
       values.push(patch.isSuspended ? 1 : 0);
+    }
+    if (sets.length === 0) {
+      const cur = await this.findById(id);
+      if (!cur) throw new NotFoundError("User");
+      return cur;
+    }
+    const now = new Date().toISOString();
+    sets.push("updated_at = ?");
+    values.push(now);
+    values.push(id);
+    const res = await this.db
+      .prepare(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`)
+      .bind(...values)
+      .run();
+    if (!res.meta?.changes) throw new NotFoundError("User");
+    const row = await this.db
+      .prepare(`SELECT * FROM users WHERE id = ?`)
+      .bind(id)
+      .first<UserRow>();
+    if (!row) throw new NotFoundError("User");
+    return mapUser(row);
+  }
+
+  async updateStreak(id: string, patch: UpdateStreakInput): Promise<User> {
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    if (patch.streakCurrent !== undefined) {
+      sets.push("streak_current = ?");
+      values.push(patch.streakCurrent);
+    }
+    if (patch.streakLongest !== undefined) {
+      sets.push("streak_longest = ?");
+      values.push(patch.streakLongest);
+    }
+    if (patch.streakFreezes !== undefined) {
+      sets.push("streak_freezes = ?");
+      values.push(patch.streakFreezes);
+    }
+    if (patch.streakLastDay !== undefined) {
+      sets.push("streak_last_day = ?");
+      values.push(patch.streakLastDay);
     }
     if (sets.length === 0) {
       const cur = await this.findById(id);
