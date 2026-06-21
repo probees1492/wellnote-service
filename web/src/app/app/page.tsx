@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkle } from "@phosphor-icons/react/dist/ssr";
 
 import { ActivityGrid } from "@/components/memo/ActivityGrid";
 import { MilestoneCelebration } from "@/components/streak/MilestoneCelebration";
@@ -78,7 +78,7 @@ export default function HomePage() {
           className="inline-flex items-center gap-2 rounded-md border bg-card px-4 py-2 text-sm shadow-sm"
           data-testid="credit-balance"
         >
-          <Sparkles className="h-4 w-4 text-muted-foreground" aria-hidden />
+          <Sparkle className="h-4 w-4 text-muted-foreground" weight="duotone" aria-hidden />
           크래딧 <span className="font-semibold">{balance ?? "—"}</span>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function HomePage() {
             </div>
             <Button>
               시작하기
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4" weight="bold" />
             </Button>
           </div>
         </CardHeader>

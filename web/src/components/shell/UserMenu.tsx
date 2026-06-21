@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Settings, User as UserIcon } from "lucide-react";
+import { SignOut, Gear, User as UserIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -82,13 +82,13 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/app/settings" className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4" aria-hidden />
+            <UserIcon className="h-4 w-4" weight="duotone" aria-hidden />
             프로필
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/app/settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" aria-hidden />
+            <Gear className="h-4 w-4" weight="duotone" aria-hidden />
             설정
           </Link>
         </DropdownMenuItem>
@@ -99,7 +99,7 @@ export function UserMenu() {
           className="flex items-center gap-2"
           data-testid="logout-btn"
         >
-          <LogOut className="h-4 w-4" aria-hidden />
+          <SignOut className="h-4 w-4" weight="duotone" aria-hidden />
           로그아웃
         </DropdownMenuItem>
       </DropdownMenuContent>

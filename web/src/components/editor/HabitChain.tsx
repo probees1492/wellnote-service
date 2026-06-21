@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame } from "lucide-react";
+import { Flame } from "@phosphor-icons/react/dist/ssr";
 
 import type { ActivityGrid, StreakStatus } from "@/lib/api";
 import { todayKst } from "@/lib/time";
@@ -60,7 +60,7 @@ export function HabitChain({
       data-testid="habit-chain"
     >
       <span className="inline-flex items-center gap-1 font-semibold text-orange-500">
-        <Flame className="h-3.5 w-3.5" aria-hidden />
+        <Flame className="h-4 w-4" weight="duotone" aria-hidden />
         {streak.current}일
       </span>
       <span className="text-muted-foreground">·</span>

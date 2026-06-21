@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera } from "lucide-react";
+import { Camera } from "@phosphor-icons/react/dist/ssr";
 
 import { DateHeading } from "@/components/editor/DateHeading";
 import { HabitChain } from "@/components/editor/HabitChain";
@@ -274,7 +274,7 @@ export default function TodayPage() {
                 aria-label="OCR (곧 출시)"
                 data-testid="ocr-button"
               >
-                <Camera className="h-4 w-4" aria-hidden />
+                <Camera className="h-4 w-4" weight="duotone" aria-hidden />
               </Button>
             </div>
           </div>

@@ -3,7 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Menu, PenSquare, Search, Settings, Shield } from "lucide-react";
+import {
+  House,
+  List as MenuIcon,
+  PencilSimple,
+  MagnifyingGlass,
+  Gear,
+  Shield,
+} from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +43,7 @@ export function Header({ variant = "app", showAdminLink = false }: HeaderProps) 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="메뉴 열기">
-              <Menu className="h-5 w-5" aria-hidden />
+              <MenuIcon className="h-5 w-5" weight="duotone" aria-hidden />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
@@ -44,22 +51,22 @@ export function Header({ variant = "app", showAdminLink = false }: HeaderProps) 
               <>
                 <DropdownMenuItem asChild>
                   <Link href="/app" className="flex items-center gap-2">
-                    <Home className="h-4 w-4" aria-hidden />홈
+                    <House className="h-4 w-4" weight="duotone" aria-hidden />홈
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/app/today" className="flex items-center gap-2">
-                    <PenSquare className="h-4 w-4" aria-hidden />오늘 메모
+                    <PencilSimple className="h-4 w-4" weight="duotone" aria-hidden />오늘 메모
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/app/search" className="flex items-center gap-2">
-                    <Search className="h-4 w-4" aria-hidden />검색
+                    <MagnifyingGlass className="h-4 w-4" weight="duotone" aria-hidden />검색
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/app/settings" className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" aria-hidden />설정
+                    <Gear className="h-4 w-4" weight="duotone" aria-hidden />설정
                   </Link>
                 </DropdownMenuItem>
                 {showAdminLink ? (
@@ -67,7 +74,7 @@ export function Header({ variant = "app", showAdminLink = false }: HeaderProps) 
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/admin" className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" aria-hidden />Admin
+                        <Shield className="h-4 w-4" weight="duotone" aria-hidden />Admin
                       </Link>
                     </DropdownMenuItem>
                   </>
@@ -77,18 +84,18 @@ export function Header({ variant = "app", showAdminLink = false }: HeaderProps) 
               <>
                 <DropdownMenuItem asChild>
                   <Link href="/admin" className="flex items-center gap-2">
-                    <Home className="h-4 w-4" aria-hidden />대시보드
+                    <House className="h-4 w-4" weight="duotone" aria-hidden />대시보드
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/admin/users" className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" aria-hidden />사용자
+                    <Shield className="h-4 w-4" weight="duotone" aria-hidden />사용자
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/app" className="flex items-center gap-2">
-                    <Home className="h-4 w-4" aria-hidden />앱으로 돌아가기
+                    <House className="h-4 w-4" weight="duotone" aria-hidden />앱으로 돌아가기
                   </Link>
                 </DropdownMenuItem>
               </>

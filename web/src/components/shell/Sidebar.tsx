@@ -3,14 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Icon } from "@phosphor-icons/react";
 import {
-  Home,
-  PenSquare,
-  Search,
-  Settings,
+  House,
+  PencilSimple,
+  MagnifyingGlass,
+  Gear,
   Shield,
-  type LucideIcon,
-} from "lucide-react";
+} from "@phosphor-icons/react/dist/ssr";
 
 import { cn } from "@/lib/utils";
 import { LogoLockup } from "@/components/brand/Logo";
@@ -18,7 +18,7 @@ import { LogoLockup } from "@/components/brand/Logo";
 interface NavItem {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: Icon;
   match: (p: string | null) => boolean;
 }
 
@@ -26,25 +26,25 @@ const APP_ITEMS: NavItem[] = [
   {
     href: "/app",
     label: "홈",
-    icon: Home,
+    icon: House,
     match: (p) => p === "/app",
   },
   {
     href: "/app/today",
     label: "오늘 메모",
-    icon: PenSquare,
+    icon: PencilSimple,
     match: (p) => !!p?.startsWith("/app/today"),
   },
   {
     href: "/app/search",
     label: "검색",
-    icon: Search,
+    icon: MagnifyingGlass,
     match: (p) => !!p?.startsWith("/app/search"),
   },
   {
     href: "/app/settings",
     label: "설정",
-    icon: Settings,
+    icon: Gear,
     match: (p) => !!p?.startsWith("/app/settings"),
   },
 ];
@@ -53,7 +53,7 @@ const ADMIN_ITEMS: NavItem[] = [
   {
     href: "/admin",
     label: "대시보드",
-    icon: Home,
+    icon: House,
     match: (p) => p === "/admin",
   },
   {
@@ -109,7 +109,7 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
               )}
               aria-current={active ? "page" : undefined}
             >
-              <Icon className="h-4 w-4" aria-hidden />
+              <Icon className="h-4 w-4" weight="duotone" aria-hidden />
               {item.label}
             </Link>
           );
@@ -124,7 +124,7 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >
-            <Shield className="h-4 w-4" aria-hidden />
+            <Shield className="h-4 w-4" weight="duotone" aria-hidden />
             Admin
           </Link>
         ) : null}
@@ -133,7 +133,7 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
             href="/app"
             className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           >
-            <Home className="h-4 w-4" aria-hidden />
+            <House className="h-4 w-4" weight="duotone" aria-hidden />
             앱으로 돌아가기
           </Link>
         ) : null}

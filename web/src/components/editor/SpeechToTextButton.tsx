@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { Microphone, MicrophoneSlash } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -222,9 +222,9 @@ export function SpeechToTextButton({
         )}
       >
         {isUnsupported ? (
-          <MicOff className="h-4 w-4" aria-hidden="true" />
+          <MicrophoneSlash className="h-4 w-4" weight="duotone" aria-hidden="true" />
         ) : (
-          <Mic className="h-4 w-4" aria-hidden="true" />
+          <Microphone className="h-4 w-4" weight="duotone" aria-hidden="true" />
         )}
       </Button>
     </div>
