@@ -83,9 +83,6 @@ interface SidebarProps {
   showAdminLink?: boolean;
 }
 
-const COLLAPSED_W = "w-14"; // 56px — icon column
-const EXPANDED_W = "w-60"; // 240px — icon + label
-
 /**
  * Cloudflare-dashboard-style sidebar:
  *  - Always reserves a narrow icon rail in the layout (so content doesn't
@@ -101,11 +98,14 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
   const [expanded, setExpanded] = React.useState(false);
 
   return (
-    // Outer slot always reserves the collapsed width so the main content has
-    // a stable left margin. The aside inside overlays when expanded.
+    // Outer slot is a pure layout placeholder so the main content has a
+    // stable left margin. The aside itself is `fixed` against the viewport
+    // — that guarantees full height even when the absolute child renders
+    // before content has measured the parent flex item.
     <div
-      className={cn("relative hidden shrink-0 lg:block", COLLAPSED_W)}
+      className="hidden w-14 shrink-0 lg:block"
       data-testid="sidebar-slot"
+      aria-hidden="true"
     >
       <aside
         aria-label="사이드바"
@@ -122,10 +122,11 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
         data-testid="sidebar"
         data-state={expanded ? "expanded" : "collapsed"}
         // z-50 keeps the expanded panel above the sticky Header (z-30).
+        // `fixed` over `absolute` so height is always = full viewport.
         className={cn(
-          "absolute left-0 top-0 z-50 flex h-full flex-col border-r bg-card/95 backdrop-blur-sm",
+          "fixed left-0 top-0 z-50 flex h-screen flex-col border-r bg-card backdrop-blur-sm",
           "overflow-hidden transition-[width] duration-200 ease-out",
-          expanded ? `${EXPANDED_W} shadow-lg` : COLLAPSED_W,
+          expanded ? "w-60 shadow-lg" : "w-14",
         )}
       >
         <div className="flex h-16 items-center px-3">
