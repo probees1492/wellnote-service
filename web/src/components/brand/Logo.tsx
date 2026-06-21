@@ -2,7 +2,11 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Logo mark — square "W'" icon. Adapts to currentColor.
+ * Logo mark — square "W'" icon, brush-painted (matches /public/logo-mark.svg
+ * and the launcher icon). 4 stroked segments thin from left to right so the
+ * glyph reads as one continuous brush motion. Background uses currentColor
+ * so the surrounding text color drives the chip color (light-mode = dark,
+ * dark-mode = light) and the strokes invert against it.
  */
 export function LogoMark({
   className,
@@ -22,21 +26,32 @@ export function LogoMark({
         stroke="var(--background, #fff)"
         strokeLinecap="round"
         strokeLinejoin="round"
-        // 시스템 색 대비를 위해 inverse fill 강제.
       >
-        <path
-          d="M 200 310 L 372 790 L 512 470 L 652 790 L 824 310"
-          strokeWidth={92}
-        />
-        <path d="M 882 220 L 842 410" strokeWidth={64} />
+        <path d="M 208 296 L 380 800" strokeWidth={88} />
+        <path d="M 380 800 L 512 512" strokeWidth={80} />
+        <path d="M 512 512 L 644 800" strokeWidth={72} />
+        <path d="M 644 800 L 816 296" strokeWidth={64} />
       </g>
+      <path
+        d="M 866 222 L 836 364"
+        fill="none"
+        stroke="var(--background, #fff)"
+        strokeWidth={42}
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
 /**
- * Wordmark — "We'llNote" using current font (Pretendard). Apostrophe is
- * visually emphasized so the brand reads as "We will note!".
+ * Wordmark — "We'llNote" rendered as inline SVG.
+ *
+ * The apostrophe (will의 약자) is a 3 px vertical bar squeezed between 'e'
+ * and 'l' so the brand reads as "WellNote" at a glance and "We'll Note"
+ * on closer inspection. fill="currentColor" picks up the surrounding
+ * text color (works in dark mode).
+ *
+ * Size prop controls the SVG height; width auto-scales via the viewBox.
  */
 export function LogoWordmark({
   className,
@@ -46,22 +61,31 @@ export function LogoWordmark({
   size?: "sm" | "md" | "lg" | "xl";
 }) {
   const sizes: Record<typeof size, string> = {
-    sm: "text-base",
-    md: "text-lg",
-    lg: "text-2xl",
-    xl: "text-4xl lg:text-5xl",
+    sm: "h-5",
+    md: "h-6",
+    lg: "h-8",
+    xl: "h-12 lg:h-16",
   } as const;
   return (
-    <span
-      className={cn(
-        "inline-flex items-baseline font-extrabold tracking-tight text-foreground",
-        sizes[size],
-        className,
-      )}
+    <svg
+      viewBox="0 0 540 120"
+      preserveAspectRatio="xMinYMid meet"
+      role="img"
       aria-label="We'llNote"
+      className={cn("w-auto text-foreground", sizes[size], className)}
     >
-      We<span className="opacity-70">&apos;</span>llNote
-    </span>
+      <g
+        fontFamily='"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+        fontWeight={800}
+        fontSize={100}
+        letterSpacing={-3}
+        fill="currentColor"
+      >
+        <text x={0} y={92}>We</text>
+        <rect x={139} y={22} width={3} height={20} rx={1.5} />
+        <text x={145} y={92}>llNote</text>
+      </g>
+    </svg>
   );
 }
 
