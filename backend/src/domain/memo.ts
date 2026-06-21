@@ -12,6 +12,8 @@ export interface Memo {
   isReadonly: boolean;
   readonlyAt: string | null;
   deletedAt: string | null;
+  /** Pin this memo belongs to, or null. */
+  pinId: string | null;
   createdAt: string;
   updatedAt: string;
 }

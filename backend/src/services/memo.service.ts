@@ -132,6 +132,20 @@ export class DefaultMemoService implements MemoService {
   /** index: (userId, dateKst) -> memoId */
   private byUserDate = new Map<string, string>();
 
+  /** Test-mode helper: read a memo from the in-memory cache. */
+  _peekMemo(id: string): Memo | undefined {
+    return this.memosById.get(id);
+  }
+
+  /** Test-mode helper: mutate a memo in the in-memory cache. */
+  _patchMemo(id: string, patch: Partial<Memo>): Memo | null {
+    const cur = this.memosById.get(id);
+    if (!cur) return null;
+    const next = { ...cur, ...patch };
+    this.memosById.set(id, next);
+    return next;
+  }
+
   constructor(
     private readonly memos: MemoRepo | MemoRepoLike,
     private readonly users: UserRepo | UserRepoLike,
@@ -269,6 +283,7 @@ export class DefaultMemoService implements MemoService {
       isReadonly: false,
       readonlyAt: null,
       deletedAt: null,
+      pinId: null,
       createdAt: opts.now.toISOString(),
       updatedAt: opts.now.toISOString(),
     };
@@ -348,6 +363,7 @@ export class DefaultMemoService implements MemoService {
           isReadonly: false,
           readonlyAt: null,
           deletedAt: null,
+          pinId: null,
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
         };

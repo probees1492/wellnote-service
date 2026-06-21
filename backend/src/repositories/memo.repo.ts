@@ -53,6 +53,13 @@ export interface MemoRepo {
     cursor?: string;
     limit?: number;
   }): Promise<{ items: Memo[]; nextCursor: string | null }>;
+
+  /** Set or clear the pin a memo belongs to. Returns the updated memo. */
+  setPin(opts: {
+    userId: string;
+    memoId: string;
+    pinId: string | null;
+  }): Promise<Memo>;
 }
 
 interface MemoRow {
@@ -69,6 +76,7 @@ interface MemoRow {
   is_readonly: number;
   readonly_at: string | null;
   deleted_at: string | null;
+  pin_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -88,6 +96,7 @@ function mapMemo(row: MemoRow): Memo {
     isReadonly: row.is_readonly === 1,
     readonlyAt: row.readonly_at,
     deletedAt: row.deleted_at,
+    pinId: row.pin_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -421,6 +430,31 @@ export class D1MemoRepo implements MemoRepo {
     const items = rows.slice(0, limit).map(mapMemo);
     const nextCursor = hasMore ? items[items.length - 1].dateKst : null;
     return { items, nextCursor };
+  }
+
+  async setPin(opts: {
+    userId: string;
+    memoId: string;
+    pinId: string | null;
+  }): Promise<Memo> {
+    const now = new Date().toISOString();
+    const res = await this.db
+      .prepare(
+        `UPDATE memos
+            SET pin_id = ?, updated_at = ?
+          WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+      )
+      .bind(opts.pinId, now, opts.memoId, opts.userId)
+      .run();
+    if (!res.meta?.changes) {
+      throw new NotFoundError("Memo");
+    }
+    const row = await this.db
+      .prepare(`SELECT * FROM memos WHERE id = ?`)
+      .bind(opts.memoId)
+      .first<MemoRow>();
+    if (!row) throw new NotFoundError("Memo");
+    return mapMemo(row);
   }
 
   private async upsertDailyActivity(

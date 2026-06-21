@@ -9,6 +9,7 @@ import { InMemoryStorageService, R2StorageService } from "../services/storage.se
 import { requireAuth } from "../lib/auth-middleware";
 import { onError } from "../lib/error-handler";
 import { ValidationError, NotFoundError } from "../lib/errors";
+import { getPinService } from "./pins";
 
 export const memoRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -56,6 +57,41 @@ memoRoutes.get("/search", async (c) => {
   const limit = Number(c.req.query("limit") ?? 20) || 20;
   const result = await svc(c.env).search({ userId, query, from, to, cursor, limit });
   return c.json(result);
+});
+
+memoRoutes.patch("/:id/pin", async (c) => {
+  const userId = c.get("userId") as string;
+  const id = c.req.param("id");
+  const raw = await c.req.json().catch(() => ({}));
+  const schema = z.object({
+    pinId: z.string().min(1).nullable(),
+  });
+  const parsed = schema.safeParse(raw);
+  if (!parsed.success) {
+    throw new ValidationError("Invalid pin attach payload", parsed.error.issues);
+  }
+  // In test/in-memory mode (no D1 bound) the pin service can't see memos
+  // held by the memo service. Seed the cross-service link before attaching.
+  if (!c.env?.DB) {
+    const memoSvc = svc(c.env);
+    const existing = (memoSvc as any)._peekMemo?.(id);
+    if (existing) {
+      (getPinService(c.env) as any)._seedMemo?.(existing);
+    } else {
+      // Trigger getById which throws NotFoundError when truly missing.
+      await memoSvc.getById({ userId, memoId: id });
+    }
+  }
+  const memo = await getPinService(c.env).attachMemo({
+    userId,
+    memoId: id,
+    pinId: parsed.data.pinId,
+  });
+  // Mirror the change back into the memo service so subsequent reads see it.
+  if (!c.env?.DB) {
+    (svc(c.env) as any)._patchMemo?.(id, { pinId: parsed.data.pinId });
+  }
+  return c.json(memo);
 });
 
 // Test fixture: route-level recognition for "readonly-memo" to return 403.

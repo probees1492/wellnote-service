@@ -43,11 +43,17 @@ export async function createTestEnv(): Promise<TestEnv> {
   const raw: BetterSqliteDatabase = new Database(":memory:");
   raw.pragma("journal_mode = MEMORY");
   raw.pragma("foreign_keys = ON");
-  const sql = readFileSync(
-    resolve(__dirname, "../../migrations/0001_init.sql"),
-    "utf8",
-  );
-  raw.exec(sql);
+  for (const file of [
+    "0001_init.sql",
+    "0002_streak.sql",
+    "0003_pins.sql",
+  ]) {
+    const sql = readFileSync(
+      resolve(__dirname, `../../migrations/${file}`),
+      "utf8",
+    );
+    raw.exec(sql);
+  }
 
   const db: D1Database = wrapSqliteAsD1(raw);
   const bucket: R2Bucket = createMockR2();
