@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera } from "lucide-react";
 
+import { DateHeading } from "@/components/editor/DateHeading";
 import { HabitChain } from "@/components/editor/HabitChain";
 import {
   ManuscriptEditor,
@@ -203,11 +204,11 @@ export default function TodayPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{today}</h1>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <DateHeading iso={today} />
           <div
-            className="text-sm text-muted-foreground"
+            className="pt-1 text-sm text-muted-foreground"
             data-testid="save-state"
             data-state={saveState}
           >

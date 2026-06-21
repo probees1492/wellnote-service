@@ -15,3 +15,28 @@ export function addDaysIso(iso: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+/** Korean weekday labels — 0=Sun..6=Sat (matches Date.getUTCDay). */
+export const WEEKDAY_KR = ["일", "월", "화", "수", "목", "금", "토"] as const;
+
+/** Decompose a YYYY-MM-DD into Korean-friendly display parts. */
+export function formatKoreanDate(iso: string): {
+  year: number;
+  month: number;
+  day: number;
+  weekdayIndex: number;
+  weekdayShort: string;
+  weekdayLong: string;
+} {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const idx = dt.getUTCDay();
+  return {
+    year: y,
+    month: m,
+    day: d,
+    weekdayIndex: idx,
+    weekdayShort: WEEKDAY_KR[idx],
+    weekdayLong: `${WEEKDAY_KR[idx]}요일`,
+  };
+}

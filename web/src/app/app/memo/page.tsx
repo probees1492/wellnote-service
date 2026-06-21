@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { DateHeading } from "@/components/editor/DateHeading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -89,9 +90,9 @@ function MemoByDateInner() {
   }
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">{memo.dateKst}</h1>
-        <Badge variant="secondary">Readonly</Badge>
+      <div className="flex items-start justify-between gap-3">
+        <DateHeading iso={memo.dateKst} />
+        <Badge variant="secondary" className="mt-1">Readonly</Badge>
       </div>
       <Card className="border-0 bg-transparent shadow-none">
         <CardContent
