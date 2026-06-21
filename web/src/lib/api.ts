@@ -408,6 +408,8 @@ export const api = {
     request<{ ok: true }>(`/admin/users/${id}/suspend`, { method: "POST" }),
   adminUnsuspend: (id: string) =>
     request<{ ok: true }>(`/admin/users/${id}/unsuspend`, { method: "POST" }),
+  adminStatsOverview: () =>
+    request<AdminStatsOverview>("/admin/stats/overview"),
   pins: {
     list: () =>
       request<{ items: Pin[]; nextCursor: string | null }>("/pins"),
@@ -599,6 +601,23 @@ export interface AdminUserRow {
   role?: "user" | "admin" | "superadmin";
   isSuspended?: boolean;
   createdAt?: string;
+}
+
+export interface AdminStatsOverview {
+  source: "d1" | "stub";
+  totalUsers: number;
+  signupsToday: number;
+  signupsLast7d: number;
+  signupsLast30d: number;
+  suspendedUsers: number;
+  totalMemos: number;
+  memosToday: number;
+  dailyActiveUsers: number;
+  avgCharCount: number;
+  totalCredits: number;
+  avgCredits: number;
+  totalFollows: number;
+  generatedAt: string;
 }
 
 // ---------- Buddy graph & memo interactions ----------

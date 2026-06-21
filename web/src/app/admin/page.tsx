@@ -6,12 +6,17 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api, type AdminUserRow } from "@/lib/api";
+import {
+  api,
+  type AdminStatsOverview,
+  type AdminUserRow,
+} from "@/lib/api";
 
 export default function AdminDashboard() {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [stats, setStats] = useState<AdminStatsOverview | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -30,9 +35,28 @@ export default function AdminDashboard() {
     };
   }, [q]);
 
+  // Stats fetched once on mount; cheap (single D1.batch call) so no debounce.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await api.adminStatsOverview();
+        if (alive) setStats(r);
+      } catch {
+        /* silent — primary surface (user list) still works */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">Admin 대시보드</h1>
+
+      <KpiGrid stats={stats} />
+
       <div className="flex flex-col gap-2">
         <Label htmlFor="admin-q">이메일로 검색</Label>
         <Input
@@ -91,5 +115,87 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function KpiGrid({ stats }: { stats: AdminStatsOverview | null }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <KpiCard
+        label="전체 가입자"
+        value={stats?.totalUsers}
+        sub={
+          stats
+            ? `정지 ${stats.suspendedUsers}명`
+            : undefined
+        }
+        testid="kpi-total-users"
+      />
+      <KpiCard
+        label="오늘 가입"
+        value={stats?.signupsToday}
+        sub={
+          stats
+            ? `7일 ${stats.signupsLast7d} · 30일 ${stats.signupsLast30d}`
+            : undefined
+        }
+        testid="kpi-signups-today"
+      />
+      <KpiCard
+        label="오늘 메모"
+        value={stats?.memosToday}
+        sub={
+          stats
+            ? `DAU ${stats.dailyActiveUsers}명`
+            : undefined
+        }
+        testid="kpi-memos-today"
+      />
+      <KpiCard
+        label="총 메모"
+        value={stats?.totalMemos}
+        sub={
+          stats ? `평균 ${stats.avgCharCount}자` : undefined
+        }
+        testid="kpi-total-memos"
+      />
+      <KpiCard
+        label="크래딧 합계"
+        value={stats?.totalCredits}
+        sub={stats ? `1인 평균 ${stats.avgCredits}` : undefined}
+        testid="kpi-total-credits"
+      />
+      <KpiCard
+        label="버디 팔로우 수"
+        value={stats?.totalFollows}
+        testid="kpi-total-follows"
+      />
+    </div>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  sub,
+  testid,
+}: {
+  label: string;
+  value: number | undefined;
+  sub?: string;
+  testid?: string;
+}) {
+  return (
+    <Card data-testid={testid}>
+      <CardContent className="flex flex-col gap-1 p-4">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-2xl font-semibold tabular-nums tracking-tight">
+          {value === undefined ? "—" : value.toLocaleString("ko-KR")}
+        </span>
+        {sub ? (
+          <span className="text-xs text-muted-foreground">{sub}</span>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

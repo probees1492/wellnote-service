@@ -6,6 +6,7 @@ import { onError } from "../lib/error-handler";
 import { ValidationError, NotFoundError } from "../lib/errors";
 import { getCreditService } from "./credits";
 import { D1UserRepo } from "../repositories/user.repo";
+import { todayKst } from "../lib/time";
 
 export const adminRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -87,13 +88,99 @@ adminRoutes.post("/memos/:id/force-readonly", async (c) => {
 });
 
 adminRoutes.get("/stats/overview", async (c) => {
+  if (!c.env?.DB) {
+    // Test fallback — keep the shape but flag the source.
+    return c.json({
+      source: "stub",
+      totalUsers: 0,
+      signupsToday: 0,
+      signupsLast7d: 0,
+      signupsLast30d: 0,
+      suspendedUsers: 0,
+      totalMemos: 0,
+      memosToday: 0,
+      dailyActiveUsers: 0,
+      avgCharCount: 0,
+      totalCredits: 0,
+      avgCredits: 0,
+      totalFollows: 0,
+      generatedAt: new Date().toISOString(),
+    });
+  }
+  const today = todayKst();
+  const nowIso = new Date().toISOString();
+  const day = 24 * 60 * 60 * 1000;
+  const t7 = new Date(Date.now() - 7 * day).toISOString();
+  const t30 = new Date(Date.now() - 30 * day).toISOString();
+
+  // Single batched read — every row is a one-line scalar so D1 plans them
+  // independently and we keep this endpoint cheap (sub-50 ms even on prod).
+  const [
+    totalUsers,
+    suspendedUsers,
+    signupsToday,
+    signupsLast7d,
+    signupsLast30d,
+    totalMemos,
+    memosToday,
+    dailyActiveUsers,
+    memoStats,
+    creditStats,
+    totalFollows,
+  ] = await c.env.DB.batch([
+    c.env.DB.prepare(`SELECT COUNT(*) AS n FROM users`),
+    c.env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE is_suspended = 1`),
+    c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM users WHERE substr(created_at, 1, 10) = ?`,
+    ).bind(today),
+    c.env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE created_at >= ?`).bind(t7),
+    c.env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE created_at >= ?`).bind(t30),
+    c.env.DB.prepare(`SELECT COUNT(*) AS n FROM memos WHERE deleted_at IS NULL`),
+    c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM memos WHERE date_kst = ? AND deleted_at IS NULL`,
+    ).bind(today),
+    c.env.DB.prepare(
+      `SELECT COUNT(DISTINCT user_id) AS n FROM memos
+        WHERE date_kst = ? AND deleted_at IS NULL`,
+    ).bind(today),
+    c.env.DB.prepare(
+      `SELECT AVG(char_count) AS avg_chars FROM memos WHERE deleted_at IS NULL`,
+    ),
+    c.env.DB.prepare(
+      `SELECT SUM(credit_balance) AS total, AVG(credit_balance) AS avg
+         FROM users`,
+    ),
+    c.env.DB.prepare(`SELECT COUNT(*) AS n FROM follows`),
+  ]);
+
+  const pickN = (r: { results?: { n?: number }[] } | undefined) =>
+    Number(r?.results?.[0]?.n ?? 0);
+
   return c.json({
-    totalUsers: 0,
-    dailyActiveUsers: 0,
-    memosToday: 0,
-    avgCharCount: 0,
-    totalCredits: 0,
-    avgCredits: 0,
+    source: "d1",
+    totalUsers: pickN(totalUsers as any),
+    signupsToday: pickN(signupsToday as any),
+    signupsLast7d: pickN(signupsLast7d as any),
+    signupsLast30d: pickN(signupsLast30d as any),
+    suspendedUsers: pickN(suspendedUsers as any),
+    totalMemos: pickN(totalMemos as any),
+    memosToday: pickN(memosToday as any),
+    dailyActiveUsers: pickN(dailyActiveUsers as any),
+    avgCharCount: Math.round(
+      Number(
+        ((memoStats as any)?.results?.[0]?.avg_chars as number | null) ?? 0,
+      ),
+    ),
+    totalCredits: Number(
+      ((creditStats as any)?.results?.[0]?.total as number | null) ?? 0,
+    ),
+    avgCredits: Math.round(
+      Number(
+        ((creditStats as any)?.results?.[0]?.avg as number | null) ?? 0,
+      ),
+    ),
+    totalFollows: pickN(totalFollows as any),
+    generatedAt: nowIso,
   });
 });
 
