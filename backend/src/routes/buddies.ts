@@ -14,6 +14,7 @@ import type { BuddyProfile } from "../domain/buddy";
 import { isFollowingVisibility } from "../domain/buddy";
 import type { User } from "../domain/user";
 import { memUsers } from "./auth";
+import { getMemoService } from "./memos";
 
 export const buddyRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 buddyRoutes.onError(onError);
@@ -243,6 +244,154 @@ buddyRoutes.get("/:userId/following", requireAuth(), async (c) => {
   const page = await r.buddies.listFollowing(target, { cursor });
   const items = await hydrateProfiles(page.items, viewerId, r);
   return c.json({ items, nextCursor: page.nextCursor });
+});
+
+interface FeedItem {
+  memoId: string;
+  ownerId: string;
+  ownerDisplayName: string;
+  ownerAvatarUrl: string | null;
+  dateKst: string;
+  title: string;
+  charCount: number;
+  pinId: string;
+  pinName: string;
+  pinColor: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface FeedRow {
+  memo_id: string;
+  owner_id: string;
+  owner_display_name: string;
+  owner_avatar_updated_at: string | null;
+  date_kst: string;
+  title: string;
+  char_count: number;
+  pin_id: string;
+  pin_name: string;
+  pin_color: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * GET /buddies/feed — paginated metadata of public-pin memos from users the
+ * viewer follows. Most-recently-updated first. Body is fetched separately
+ * via /buddies/memos/:memoId.
+ */
+buddyRoutes.get("/feed", requireAuth(), async (c) => {
+  const viewerId = c.get("userId") as string;
+  const cursor = c.req.query("cursor") ?? undefined;
+  const limit = Math.max(1, Math.min(Number(c.req.query("limit") ?? 20) || 20, 50));
+
+  if (!c.env?.DB) {
+    return c.json({ items: [], nextCursor: null });
+  }
+
+  const binds: unknown[] = [viewerId];
+  let where = `f.follower_id = ?
+               AND p.visibility = 'public'
+               AND m.deleted_at IS NULL`;
+  if (cursor) {
+    where += " AND m.updated_at < ?";
+    binds.push(cursor);
+  }
+  binds.push(limit + 1);
+
+  const sql = `
+    SELECT
+      m.id           AS memo_id,
+      m.user_id      AS owner_id,
+      u.display_name AS owner_display_name,
+      u.avatar_updated_at AS owner_avatar_updated_at,
+      m.date_kst     AS date_kst,
+      m.title        AS title,
+      m.char_count   AS char_count,
+      p.id           AS pin_id,
+      p.name         AS pin_name,
+      p.color        AS pin_color,
+      m.created_at   AS created_at,
+      m.updated_at   AS updated_at
+    FROM follows f
+    JOIN memos m ON m.user_id = f.followee_id
+    JOIN pins  p ON p.id = m.pin_id
+    JOIN users u ON u.id = m.user_id
+    WHERE ${where}
+    ORDER BY m.updated_at DESC
+    LIMIT ?`;
+
+  const { results } = await c.env.DB.prepare(sql)
+    .bind(...binds)
+    .all<FeedRow>();
+  const rows = results ?? [];
+  const items: FeedItem[] = rows.slice(0, limit).map((r) => ({
+    memoId: r.memo_id,
+    ownerId: r.owner_id,
+    ownerDisplayName: r.owner_display_name,
+    ownerAvatarUrl: r.owner_avatar_updated_at
+      ? `/users/${r.owner_id}/avatar?v=${encodeURIComponent(
+          r.owner_avatar_updated_at,
+        )}`
+      : null,
+    dateKst: r.date_kst,
+    title: r.title,
+    charCount: r.char_count,
+    pinId: r.pin_id,
+    pinName: r.pin_name,
+    pinColor: r.pin_color,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }));
+  const nextCursor =
+    rows.length > limit ? items[items.length - 1].updatedAt : null;
+  return c.json({ items, nextCursor });
+});
+
+/**
+ * GET /buddies/memos/:memoId — full body of a memo IF it sits in a public
+ * pin. Reachable by any authenticated user; the public-pin attribution acts
+ * as the access-control flag (spec: "공개된 핀 글").
+ */
+buddyRoutes.get("/memos/:memoId", requireAuth(), async (c) => {
+  const memoId = c.req.param("memoId");
+  if (!c.env?.DB) throw new NotFoundError("Memo");
+  const row = await c.env.DB.prepare(
+    `SELECT m.user_id AS owner_id, p.visibility AS pin_visibility,
+            p.id AS pin_id, p.name AS pin_name, p.color AS pin_color
+       FROM memos m
+       LEFT JOIN pins p ON p.id = m.pin_id
+       WHERE m.id = ? AND m.deleted_at IS NULL`,
+  )
+    .bind(memoId)
+    .first<{
+      owner_id: string;
+      pin_visibility: string | null;
+      pin_id: string | null;
+      pin_name: string | null;
+      pin_color: string | null;
+    }>();
+  if (!row) throw new NotFoundError("Memo");
+  const viewerId = c.get("userId") as string;
+  if (row.owner_id !== viewerId && row.pin_visibility !== "public") {
+    throw new ForbiddenError("Memo is not public");
+  }
+  const memo = await getMemoService(c.env).loadForRead(memoId);
+  if (!memo) throw new NotFoundError("Memo");
+  return c.json({
+    memo,
+    owner: { id: row.owner_id },
+    pin:
+      row.pin_id !== null
+        ? {
+            id: row.pin_id,
+            name: row.pin_name,
+            color: row.pin_color,
+            visibility: row.pin_visibility,
+          }
+        : null,
+  });
 });
 
 async function hydrateProfiles(

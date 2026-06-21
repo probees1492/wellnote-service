@@ -31,6 +31,11 @@ function svc(env: Env): DefaultMemoService {
   _svc = new DefaultMemoService(memoRepo, userRepo, crypto, storage);
   return _svc;
 }
+/** Exposed so sibling route modules (e.g. /buddies) can share the same
+ *  in-memory + decryption state without forking another singleton. */
+export function getMemoService(env: Env): DefaultMemoService {
+  return svc(env);
+}
 
 memoRoutes.get("/today", async (c) => {
   const userId = c.get("userId") as string;

@@ -49,6 +49,12 @@ export interface MemoService {
   }): Promise<{ items: Memo[]; nextCursor: string | null }>;
   assertReadable(opts: { userId: string; memo: Memo }): Promise<void>;
   forceReadonly(opts: { memoId: string; now?: Date }): Promise<Memo>;
+  /**
+   * Owner-less read used by buddy feed: returns the memo + plaintext body
+   * regardless of caller identity. CALLERS MUST enforce their own
+   * authorization (e.g. the memo's pin is public) before invoking this.
+   */
+  loadForRead(memoId: string): Promise<MemoWithBody | null>;
 }
 
 interface MemoRepoLike {
@@ -320,6 +326,13 @@ export class DefaultMemoService implements MemoService {
       // logical user. Otherwise NotFound.
       throw new NotFoundError("Memo");
     }
+    const body = await this.loadBody(memo);
+    return { ...memo, body };
+  }
+
+  async loadForRead(memoId: string): Promise<MemoWithBody | null> {
+    const memo = await this.loadById(memoId);
+    if (!memo) return null;
     const body = await this.loadBody(memo);
     return { ...memo, body };
   }
