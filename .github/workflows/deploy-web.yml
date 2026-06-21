@@ -49,9 +49,9 @@ jobs:
           fi
           echo "environment=$ENV" >> "$GITHUB_OUTPUT"
           case "$ENV" in
-            dev)   echo "api_base_url=https://wellnote-api-dev.parovia-6614b80f.workers.dev"   >> "$GITHUB_OUTPUT"; echo "branch=develop" >> "$GITHUB_OUTPUT" ;;
-            stage) echo "api_base_url=https://wellnote-api-stage.parovia-6614b80f.workers.dev" >> "$GITHUB_OUTPUT"; echo "branch=stage"   >> "$GITHUB_OUTPUT" ;;
-            prod)  echo "api_base_url=https://wellnote-api-prod.parovia-6614b80f.workers.dev"  >> "$GITHUB_OUTPUT"; echo "branch=main"    >> "$GITHUB_OUTPUT" ;;
+            dev)   echo "api_base_url=https://api-dev.wellnote.io"   >> "$GITHUB_OUTPUT"; echo "branch=develop" >> "$GITHUB_OUTPUT" ;;
+            stage) echo "api_base_url=https://api-stage.wellnote.io" >> "$GITHUB_OUTPUT"; echo "branch=stage"   >> "$GITHUB_OUTPUT" ;;
+            prod)  echo "api_base_url=https://api.wellnote.io"       >> "$GITHUB_OUTPUT"; echo "branch=main"    >> "$GITHUB_OUTPUT" ;;
             *)     echo "api_base_url="                                                         >> "$GITHUB_OUTPUT"; echo "branch="        >> "$GITHUB_OUTPUT" ;;
           esac
 
