@@ -278,6 +278,16 @@ export default function TodayPage() {
             data-testid="memo-editor"
             data-ready={memo ? "true" : "false"}
           />
+          <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
+            <span data-testid="char-count">{body.length}자</span>
+            <span aria-hidden>·</span>
+            <WritingProgressBar
+              charCount={body.length}
+              onMilestone={setMilestoneToast}
+            />
+            <span aria-hidden>·</span>
+            <span>1일 1메모</span>
+          </div>
           <div className="flex items-center gap-2">
             <SpeechToTextButton
               onTranscript={handleTranscript}
@@ -317,17 +327,6 @@ export default function TodayPage() {
           </div>
         </CardContent>
       </Card>
-
-      <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
-        <span data-testid="char-count">{body.length}자</span>
-        <span aria-hidden>·</span>
-        <WritingProgressBar
-          charCount={body.length}
-          onMilestone={setMilestoneToast}
-        />
-        <span aria-hidden>·</span>
-        <span>1일 1메모</span>
-      </div>
     </div>
   );
 }
