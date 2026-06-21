@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -9,22 +12,43 @@ import {
 } from "@/components/ui/card";
 import { LogoLockup, LogoWordmark } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
+import { UserMenu } from "@/components/shell/UserMenu";
+import { useAuth } from "@/lib/auth-store";
 
 export default function LandingPage() {
+  const { user, hydrated, hydrate } = useAuth();
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  const isAuthed = hydrated && !!user;
+
   return (
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-6 backdrop-blur lg:px-8">
         <LogoLockup wordmarkSize="md" />
         <div className="flex items-center gap-1">
           <ThemeToggle />
-          <Link href="/login">
-            <Button variant="ghost" size="sm">
-              로그인
-            </Button>
-          </Link>
-          <Link href="/signup">
-            <Button size="sm">시작하기</Button>
-          </Link>
+          {isAuthed ? (
+            <>
+              <Link href="/app" data-testid="header-go-app">
+                <Button size="sm">내 일기로 가기</Button>
+              </Link>
+              <UserMenu />
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  로그인
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button size="sm">시작하기</Button>
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -43,14 +67,24 @@ export default function LandingPage() {
           오늘에 집중하세요. 자정이 지나면 어제의 메모는 자동으로 봉인됩니다.
         </p>
         <div className="mt-10 flex justify-center gap-3">
-          <Link href="/signup" data-testid="cta-start">
-            <Button size="lg">무료로 시작하기</Button>
-          </Link>
-          <Link href="/login">
-            <Button size="lg" variant="outline">
-              로그인
-            </Button>
-          </Link>
+          {isAuthed ? (
+            <Link href="/app" data-testid="cta-continue">
+              <Button size="lg">
+                {user?.displayName ? `${user.displayName} 님, ` : ""}오늘의 메모 쓰러 가기
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/signup" data-testid="cta-start">
+                <Button size="lg">무료로 시작하기</Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline">
+                  로그인
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </section>
 
