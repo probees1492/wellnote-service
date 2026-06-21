@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 import { cn } from "@/lib/utils";
-import { LogoLockup, LogoWordmark } from "@/components/brand/Logo";
+import { LogoMark, LogoWordmark } from "@/components/brand/Logo";
 
 interface NavItem {
   href: string;
@@ -128,34 +128,27 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
         )}
       >
         <div className="flex h-16 items-center px-3">
-          <Link href="/app" className="flex items-center gap-2 overflow-hidden">
-            {/* Collapsed: tiny brand mark; Expanded: full lockup. Cross-fade. */}
+          <Link
+            href="/app"
+            className="flex items-center gap-2 overflow-hidden"
+            aria-label="WellNote 홈"
+          >
+            {/* Always-visible mark — sits in the icon rail when collapsed and
+                anchors the lockup when expanded. */}
+            <LogoMark className="h-6 w-6 shrink-0" />
             <span
               className={cn(
-                "absolute transition-opacity duration-150",
-                expanded ? "pointer-events-none opacity-0" : "opacity-100",
-              )}
-              aria-hidden={expanded}
-            >
-              <LogoWordmark size="sm" />
-            </span>
-            <span
-              className={cn(
-                "flex items-center gap-2 transition-opacity duration-200",
+                "flex items-center gap-2 whitespace-nowrap transition-opacity duration-200",
                 expanded ? "opacity-100 delay-75" : "pointer-events-none opacity-0",
               )}
               aria-hidden={!expanded}
             >
+              <LogoWordmark size="md" />
               {variant === "admin" ? (
-                <>
-                  <LogoLockup wordmarkSize="md" />
-                  <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
-                    Admin
-                  </span>
-                </>
-              ) : (
-                <LogoLockup wordmarkSize="md" />
-              )}
+                <span className="text-xs font-medium text-muted-foreground">
+                  Admin
+                </span>
+              ) : null}
             </span>
           </Link>
         </div>
