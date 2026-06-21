@@ -52,19 +52,26 @@ export function requireAuth(): MiddlewareHandler {
     const token = bearer(c);
     if (!token) throw new UnauthorizedError("Missing bearer token");
 
-    const test = parseTestToken(token);
-    if (test) {
-      c.set("userId" as never, test.userId as never);
-      c.set("role" as never, test.role as never);
-      c.set("isSuspended" as never, false as never);
-      await next();
-      return;
+    const env = c.env as any;
+    // SECURITY: only honour the `test-user-*` / `test-admin-*` shortcut when
+    // no production JWT_SECRET is bound. Otherwise anyone could ship a
+    // request with `Authorization: Bearer test-admin-foo` and get admin
+    // access in production. The shortcut exists for unit/integration tests
+    // that run with no env bindings at all.
+    if (!env?.JWT_SECRET) {
+      const test = parseTestToken(token);
+      if (test) {
+        c.set("userId" as never, test.userId as never);
+        c.set("role" as never, test.role as never);
+        c.set("isSuspended" as never, false as never);
+        await next();
+        return;
+      }
     }
 
-    const env = c.env as any;
-    // Production: HS256 with bound JWT_SECRET. Tests run without env bindings
-    // and rely on the same hard-coded fallback used by /auth/signup so that
-    // protected routes can verify real tokens issued during a test signup.
+    // Production path: HS256 with bound JWT_SECRET. Test runs fall back to a
+    // hard-coded secret so they can still verify the real tokens
+    // /auth/signup hands out.
     const TEST_JWT_SECRET = "test-jwt-secret-do-not-use-in-prod";
     const secret = env?.JWT_SECRET ?? TEST_JWT_SECRET;
     try {
