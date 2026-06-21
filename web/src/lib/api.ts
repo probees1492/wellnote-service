@@ -34,6 +34,18 @@ export interface ApiUser {
   streakLastDay: string | null;
   /** ISO timestamp of the last 필명(display_name) change. Null if never renamed. */
   displayNameChangedAt: string | null;
+  /** ISO timestamp of the last avatar change, or null when no avatar. */
+  avatarUpdatedAt: string | null;
+  /** Cache-busted server-relative avatar URL (null until first upload). */
+  avatarUrl: string | null;
+}
+
+/** Convenience: build an absolute avatar URL for an `<img>` element. */
+export function avatarSrc(user: { avatarUrl: string | null } | null): string | null {
+  if (!user?.avatarUrl) return null;
+  return user.avatarUrl.startsWith("http")
+    ? user.avatarUrl
+    : `${API_BASE}${user.avatarUrl}`;
 }
 
 export interface ApiError extends Error {
@@ -288,6 +300,33 @@ export const api = {
       method: "PATCH",
       body: { displayName },
     }),
+  uploadAvatar: async (file: Blob): Promise<{ user: ApiUser }> => {
+    const url = buildUrl("/users/me/avatar");
+    const ct = file.type || "image/jpeg";
+    const tok = tokenStore.getAccess();
+    const headers: Record<string, string> = { "content-type": ct };
+    if (tok) headers.authorization = `Bearer ${tok}`;
+    let res = await fetch(url, { method: "PUT", headers, body: file });
+    if (res.status === 401) {
+      const refreshed = await tryRefresh();
+      if (refreshed) {
+        headers.authorization = `Bearer ${refreshed.accessToken}`;
+        res = await fetch(url, { method: "PUT", headers, body: file });
+      }
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      const err = new Error(
+        body?.error?.message ?? `Upload failed (${res.status})`,
+      ) as ApiError;
+      err.status = res.status;
+      err.code = body?.error?.code;
+      throw err;
+    }
+    return (await res.json()) as { user: ApiUser };
+  },
+  deleteAvatar: () =>
+    request<{ user: ApiUser }>("/users/me/avatar", { method: "DELETE" }),
   login: (body: { email: string; password: string }) =>
     request<{ user: ApiUser; tokens: Tokens }>("/auth/login", {
       method: "POST",

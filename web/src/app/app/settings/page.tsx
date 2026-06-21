@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { RenameDisplayNameDialog } from "@/components/profile/RenameDisplayNameDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -131,7 +132,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>프로필</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm">
+        <CardContent className="flex flex-col gap-4 text-sm">
+          {user ? (
+            <AvatarPicker user={user} onChanged={() => void refreshMe()} />
+          ) : null}
           <div className="flex justify-between py-1">
             <span className="text-muted-foreground">이메일</span>
             <span>{user?.email}</span>

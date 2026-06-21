@@ -33,6 +33,10 @@ export interface UserRepo {
   findByEmail(email: string): Promise<User | null>;
   findByDisplayName(displayName: string): Promise<User | null>;
   update(id: string, patch: UpdateUserInput): Promise<User>;
+  setAvatar(
+    id: string,
+    patch: { objectKey: string | null; contentType: string | null },
+  ): Promise<User>;
   adjustCreditBalance(id: string, delta: number): Promise<number>;
   updateStreak(id: string, patch: UpdateStreakInput): Promise<User>;
   list(opts: {
@@ -73,6 +77,9 @@ interface UserRow {
   streak_freezes?: number | null;
   streak_last_day?: string | null;
   display_name_changed_at?: string | null;
+  avatar_object_key?: string | null;
+  avatar_content_type?: string | null;
+  avatar_updated_at?: string | null;
 }
 
 interface SocialRow {
@@ -100,6 +107,9 @@ function mapUser(row: UserRow): User {
     streakFreezes: row.streak_freezes ?? 1,
     streakLastDay: row.streak_last_day ?? null,
     displayNameChangedAt: row.display_name_changed_at ?? null,
+    avatarObjectKey: row.avatar_object_key ?? null,
+    avatarContentType: row.avatar_content_type ?? null,
+    avatarUpdatedAt: row.avatar_updated_at ?? null,
   };
 }
 
@@ -250,6 +260,31 @@ export class D1UserRepo implements UserRepo {
       }
       throw e;
     }
+    if (!res.meta?.changes) throw new NotFoundError("User");
+    const row = await this.db
+      .prepare(`SELECT * FROM users WHERE id = ?`)
+      .bind(id)
+      .first<UserRow>();
+    if (!row) throw new NotFoundError("User");
+    return mapUser(row);
+  }
+
+  async setAvatar(
+    id: string,
+    patch: { objectKey: string | null; contentType: string | null },
+  ): Promise<User> {
+    const now = new Date().toISOString();
+    const res = await this.db
+      .prepare(
+        `UPDATE users
+           SET avatar_object_key = ?,
+               avatar_content_type = ?,
+               avatar_updated_at = ?,
+               updated_at = ?
+         WHERE id = ?`,
+      )
+      .bind(patch.objectKey, patch.contentType, patch.objectKey ? now : null, now, id)
+      .run();
     if (!res.meta?.changes) throw new NotFoundError("User");
     const row = await this.db
       .prepare(`SELECT * FROM users WHERE id = ?`)

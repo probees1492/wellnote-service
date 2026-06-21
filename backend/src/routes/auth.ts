@@ -80,6 +80,9 @@ interface MemUser {
   streakFreezes: number;
   streakLastDay: string | null;
   displayNameChangedAt: string | null;
+  avatarObjectKey: string | null;
+  avatarContentType: string | null;
+  avatarUpdatedAt: string | null;
 }
 
 export const memUsers = new Map<string, MemUser>();
@@ -105,6 +108,7 @@ export function safeUser(u: {
   streakFreezes?: number;
   streakLastDay?: string | null;
   displayNameChangedAt?: string | null;
+  avatarUpdatedAt?: string | null;
 }) {
   return {
     id: u.id,
@@ -121,6 +125,12 @@ export function safeUser(u: {
     streakFreezes: u.streakFreezes ?? 1,
     streakLastDay: u.streakLastDay ?? null,
     displayNameChangedAt: u.displayNameChangedAt ?? null,
+    avatarUpdatedAt: u.avatarUpdatedAt ?? null,
+    // Relative path; clients prepend their API base. Cache-busts on every
+    // upload because `?v=` includes the avatar's update timestamp.
+    avatarUrl: u.avatarUpdatedAt
+      ? `/users/${u.id}/avatar?v=${encodeURIComponent(u.avatarUpdatedAt)}`
+      : null,
   };
 }
 
@@ -267,6 +277,9 @@ authRoutes.post("/signup", async (c) => {
     streakFreezes: 1,
     streakLastDay: null,
     displayNameChangedAt: null,
+    avatarObjectKey: null,
+    avatarContentType: null,
+    avatarUpdatedAt: null,
   };
   memUsers.set(user.id, user);
   memUsersByEmail.set(email, user);
@@ -680,6 +693,9 @@ async function upsertSocialUser(
       streakFreezes: 1,
       streakLastDay: null,
       displayNameChangedAt: null,
+      avatarObjectKey: null,
+      avatarContentType: null,
+      avatarUpdatedAt: null,
     };
     memUsers.set(user.id, user);
     memUsersByEmail.set(email, user);

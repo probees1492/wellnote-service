@@ -23,6 +23,7 @@ const nextConfig = {
             { source: "/credit/:path*", destination: `${API_TARGET}/credit/:path*` },
             { source: "/streak/:path*", destination: `${API_TARGET}/streak/:path*` },
             { source: "/admin/:path*", destination: `${API_TARGET}/admin/:path*` },
+            { source: "/users/:path*", destination: `${API_TARGET}/users/:path*` },
           ];
         },
       }),

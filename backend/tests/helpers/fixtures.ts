@@ -23,6 +23,9 @@ export function makeUser(overrides: Partial<User> = {}): User {
     streakFreezes: 1,
     streakLastDay: null,
     displayNameChangedAt: null,
+    avatarObjectKey: null,
+    avatarContentType: null,
+    avatarUpdatedAt: null,
     ...overrides,
   };
 }

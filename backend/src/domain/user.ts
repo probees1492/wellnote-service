@@ -21,6 +21,12 @@ export interface User {
   streakLastDay: string | null;
   /** ISO timestamp of the last 필명(display_name) change, or null if never renamed. */
   displayNameChangedAt: string | null;
+  /** R2 object key for the profile avatar, or null if none uploaded. */
+  avatarObjectKey: string | null;
+  /** MIME type stored alongside the avatar so GET requests can echo it back. */
+  avatarContentType: string | null;
+  /** ISO timestamp of the last avatar change — used as a cache-bust token. */
+  avatarUpdatedAt: string | null;
 }
 
 export type SocialProvider = "email" | "google" | "apple";

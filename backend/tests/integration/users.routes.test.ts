@@ -175,3 +175,107 @@ describe("PATCH /users/me/display-name (필명 수정)", () => {
 
 // Silence unused-import lint when memUsersByEmail isn't referenced directly.
 void memUsersByEmail;
+
+describe("avatar routes", () => {
+  function jpegBytes(n: number): ArrayBuffer {
+    const buf = new Uint8Array(n);
+    buf[0] = 0xff;
+    buf[1] = 0xd8;
+    buf[2] = 0xff;
+    return buf.buffer;
+  }
+
+  it("PUT /users/me/avatar stores bytes and exposes avatarUrl", async () => {
+    const app = mkApp();
+    const { token, userId } = await signup(app, "avatar@x.com", "AvatarUser");
+    const res = await app.request("/users/me/avatar", {
+      method: "PUT",
+      headers: {
+        "content-type": "image/jpeg",
+        authorization: `Bearer ${token}`,
+      },
+      body: jpegBytes(512),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.user.avatarUrl).toMatch(
+      new RegExp(`^/users/${userId}/avatar\\?v=`),
+    );
+    expect(body.user.avatarUpdatedAt).toBeTypeOf("string");
+  });
+
+  it("GET /users/:userId/avatar streams the stored bytes", async () => {
+    const app = mkApp();
+    const { token, userId } = await signup(app, "avatar2@x.com", "AvatarTwo");
+    await app.request("/users/me/avatar", {
+      method: "PUT",
+      headers: {
+        "content-type": "image/png",
+        authorization: `Bearer ${token}`,
+      },
+      body: jpegBytes(64),
+    });
+    const res = await app.request(`/users/${userId}/avatar`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/png");
+    expect(res.headers.get("cache-control")).toMatch(/max-age=3600/);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(bytes.length).toBe(64);
+  });
+
+  it("DELETE /users/me/avatar clears the avatar fields", async () => {
+    const app = mkApp();
+    const { token } = await signup(app, "avatar3@x.com", "AvatarThree");
+    await app.request("/users/me/avatar", {
+      method: "PUT",
+      headers: {
+        "content-type": "image/jpeg",
+        authorization: `Bearer ${token}`,
+      },
+      body: jpegBytes(32),
+    });
+    const res = await app.request("/users/me/avatar", {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.user.avatarUrl).toBe(null);
+    expect(body.user.avatarUpdatedAt).toBe(null);
+  });
+
+  it("rejects unsupported content-types with 400", async () => {
+    const app = mkApp();
+    const { token } = await signup(app, "badmime@x.com", "BadMime");
+    const res = await app.request("/users/me/avatar", {
+      method: "PUT",
+      headers: {
+        "content-type": "image/gif",
+        authorization: `Bearer ${token}`,
+      },
+      body: jpegBytes(8),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects oversized bodies with 413", async () => {
+    const app = mkApp();
+    const { token } = await signup(app, "huge@x.com", "Huge");
+    const res = await app.request("/users/me/avatar", {
+      method: "PUT",
+      headers: {
+        "content-type": "image/jpeg",
+        authorization: `Bearer ${token}`,
+      },
+      body: jpegBytes(3 * 1024 * 1024),
+    });
+    expect(res.status).toBe(413);
+  });
+
+  it("avatar fetch 404 when never uploaded", async () => {
+    const app = mkApp();
+    const { userId } = await signup(app, "noavatar@x.com", "NoAvatar");
+    const res = await app.request(`/users/${userId}/avatar`);
+    expect(res.status).toBe(404);
+  });
+});
