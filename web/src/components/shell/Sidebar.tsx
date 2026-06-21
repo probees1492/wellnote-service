@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 import { cn } from "@/lib/utils";
-import { LogoLockup } from "@/components/brand/Logo";
+import { LogoLockup, LogoWordmark } from "@/components/brand/Logo";
 
 interface NavItem {
   href: string;
@@ -83,78 +83,161 @@ interface SidebarProps {
   showAdminLink?: boolean;
 }
 
+const COLLAPSED_W = "w-14"; // 56px — icon column
+const EXPANDED_W = "w-60"; // 240px — icon + label
+
+/**
+ * Cloudflare-dashboard-style sidebar:
+ *  - Always reserves a narrow icon rail in the layout (so content doesn't
+ *    reflow when hovered).
+ *  - The actual aside grows on hover via a width transition; while expanded
+ *    it overlays the main content with a soft shadow.
+ *  - Touch users: no hover events fire, so they get the wider rail by tapping
+ *    a header toggle (kept minimal — phones/tablets use the Header dropdown).
+ */
 export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps) {
   const pathname = usePathname();
   const items = variant === "admin" ? ADMIN_ITEMS : APP_ITEMS;
+  const [expanded, setExpanded] = React.useState(false);
 
   return (
-    <aside
-      aria-label="사이드바"
-      className="hidden w-60 shrink-0 border-r bg-card/40 lg:flex lg:flex-col"
-      data-testid="sidebar"
+    // Outer slot always reserves the collapsed width so the main content has
+    // a stable left margin. The aside inside overlays when expanded.
+    <div
+      className={cn("relative hidden shrink-0 lg:block", COLLAPSED_W)}
+      data-testid="sidebar-slot"
     >
-      <div className="flex h-16 items-center px-6">
-        <Link href="/app" className="flex items-center gap-2">
-          {variant === "admin" ? (
-            <>
-              <LogoLockup wordmarkSize="md" />
-              <span className="text-xs font-medium text-muted-foreground">
-                Admin
-              </span>
-            </>
-          ) : (
-            <LogoLockup wordmarkSize="md" />
-          )}
-        </Link>
-      </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {items.map((item) => {
-          const active = item.match(pathname);
-          const Icon = item.icon;
-          return (
-            <Link
+      <aside
+        aria-label="사이드바"
+        onMouseEnter={() => setExpanded(true)}
+        onMouseLeave={() => setExpanded(false)}
+        onFocus={() => setExpanded(true)}
+        onBlur={(e) => {
+          // collapse when focus actually leaves the aside, not when it moves
+          // between two child links.
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            setExpanded(false);
+          }
+        }}
+        data-testid="sidebar"
+        data-state={expanded ? "expanded" : "collapsed"}
+        className={cn(
+          "absolute left-0 top-0 z-30 flex h-full flex-col border-r bg-card/95 backdrop-blur-sm",
+          "overflow-hidden transition-[width] duration-200 ease-out",
+          expanded ? `${EXPANDED_W} shadow-lg` : COLLAPSED_W,
+        )}
+      >
+        <div className="flex h-16 items-center px-3">
+          <Link href="/app" className="flex items-center gap-2 overflow-hidden">
+            {/* Collapsed: tiny brand mark; Expanded: full lockup. Cross-fade. */}
+            <span
+              className={cn(
+                "absolute transition-opacity duration-150",
+                expanded ? "pointer-events-none opacity-0" : "opacity-100",
+              )}
+              aria-hidden={expanded}
+            >
+              <LogoWordmark size="sm" />
+            </span>
+            <span
+              className={cn(
+                "flex items-center gap-2 transition-opacity duration-200",
+                expanded ? "opacity-100 delay-75" : "pointer-events-none opacity-0",
+              )}
+              aria-hidden={!expanded}
+            >
+              {variant === "admin" ? (
+                <>
+                  <LogoLockup wordmarkSize="md" />
+                  <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
+                    Admin
+                  </span>
+                </>
+              ) : (
+                <LogoLockup wordmarkSize="md" />
+              )}
+            </span>
+          </Link>
+        </div>
+        <nav className="flex-1 space-y-1 px-2 py-4">
+          {items.map((item) => (
+            <SidebarLink
               key={item.href}
               href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-              )}
-              aria-current={active ? "page" : undefined}
-            >
-              <Icon className="h-4 w-4" weight="duotone" aria-hidden />
-              {item.label}
-            </Link>
-          );
-        })}
-        {variant === "app" && showAdminLink ? (
-          <Link
-            href="/admin"
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              pathname?.startsWith("/admin")
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            <Shield className="h-4 w-4" weight="duotone" aria-hidden />
-            Admin
-          </Link>
-        ) : null}
-        {variant === "admin" ? (
-          <Link
-            href="/app"
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <House className="h-4 w-4" weight="duotone" aria-hidden />
-            앱으로 돌아가기
-          </Link>
-        ) : null}
-      </nav>
-      <div className="border-t px-6 py-4 text-xs text-muted-foreground">
-        매일 한 페이지, 봉인되는 일기.
-      </div>
-    </aside>
+              label={item.label}
+              icon={item.icon}
+              active={item.match(pathname)}
+              expanded={expanded}
+            />
+          ))}
+          {variant === "app" && showAdminLink ? (
+            <SidebarLink
+              href="/admin"
+              label="Admin"
+              icon={Shield}
+              active={!!pathname?.startsWith("/admin")}
+              expanded={expanded}
+            />
+          ) : null}
+          {variant === "admin" ? (
+            <SidebarLink
+              href="/app"
+              label="앱으로 돌아가기"
+              icon={House}
+              active={false}
+              expanded={expanded}
+            />
+          ) : null}
+        </nav>
+        <div
+          className={cn(
+            "border-t px-3 py-4 text-xs text-muted-foreground transition-opacity duration-150",
+            expanded ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+          aria-hidden={!expanded}
+        >
+          <span className="whitespace-nowrap">매일 한 페이지, 봉인되는 일기.</span>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function SidebarLink({
+  href,
+  label,
+  icon: IconComponent,
+  active,
+  expanded,
+}: {
+  href: string;
+  label: string;
+  icon: Icon;
+  active: boolean;
+  expanded: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      title={label}
+      className={cn(
+        "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors",
+        active
+          ? "bg-accent text-accent-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+      )}
+      aria-current={active ? "page" : undefined}
+    >
+      <IconComponent className="h-4 w-4 shrink-0" weight="duotone" aria-hidden />
+      <span
+        className={cn(
+          "whitespace-nowrap transition-opacity duration-150",
+          expanded ? "opacity-100 delay-75" : "pointer-events-none opacity-0",
+        )}
+        aria-hidden={!expanded}
+      >
+        {label}
+      </span>
+    </Link>
   );
 }
