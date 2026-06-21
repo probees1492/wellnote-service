@@ -66,7 +66,7 @@ export default function AdminDashboard() {
 
       <KpiGrid stats={stats} />
 
-      <UsageCard usage={usage} />
+      <UsageCard usage={usage} onRefreshed={setUsage} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="admin-q">이메일로 검색</Label>

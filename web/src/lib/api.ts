@@ -411,6 +411,11 @@ export const api = {
   adminStatsOverview: () =>
     request<AdminStatsOverview>("/admin/stats/overview"),
   adminUsage: () => request<AdminUsage>("/admin/usage"),
+  adminUsageRefresh: () =>
+    request<{ source: "live"; snapshot: AdminUsageSnapshot | null }>(
+      "/admin/usage/refresh",
+      { method: "POST" },
+    ),
   pins: {
     list: () =>
       request<{ items: Pin[]; nextCursor: string | null }>("/pins"),

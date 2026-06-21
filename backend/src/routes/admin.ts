@@ -7,7 +7,7 @@ import { ValidationError, NotFoundError } from "../lib/errors";
 import { getCreditService } from "./credits";
 import { D1UserRepo } from "../repositories/user.repo";
 import { todayKst } from "../lib/time";
-import { USAGE_KV_KEY, type UsageRecord } from "../cron/usage-snapshot";
+import { USAGE_KV_KEY, runUsageSnapshot, type UsageRecord } from "../cron/usage-snapshot";
 
 export const adminRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -187,6 +187,28 @@ adminRoutes.get("/stats/overview", async (c) => {
 
 adminRoutes.get("/audit-log", async (c) => {
   return c.json({ items: [], nextCursor: null });
+});
+
+/**
+ * POST /admin/usage/refresh — synchronous on-demand snapshot. Same path the
+ * 02:00 KST cron takes, exposed for admins so the UI doesn't have to wait
+ * a day after the secret lands. Refuses (502) when CF_ANALYTICS_TOKEN is
+ * unset, since otherwise we'd silently write a null snapshot.
+ */
+adminRoutes.post("/usage/refresh", async (c) => {
+  if (!c.env?.CF_ANALYTICS_TOKEN || !c.env?.CF_ACCOUNT_ID) {
+    return c.json(
+      {
+        error: {
+          code: "NOT_IMPLEMENTED",
+          message: "CF_ANALYTICS_TOKEN / CF_ACCOUNT_ID not configured",
+        },
+      },
+      502,
+    );
+  }
+  const record = await runUsageSnapshot(c.env);
+  return c.json({ source: "live", snapshot: record });
 });
 
 /**

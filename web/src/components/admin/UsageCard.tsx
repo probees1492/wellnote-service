@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AdminUsage } from "@/lib/api";
+import { api, type AdminUsage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface Props {
   usage: AdminUsage | null;
+  onRefreshed?: (next: AdminUsage) => void;
 }
 
 /**
@@ -14,7 +18,26 @@ interface Props {
  * row renders a progress bar against the free-tier quota; >=80% trips the
  * warn style, >=100% turns destructive.
  */
-export function UsageCard({ usage }: Props) {
+export function UsageCard({ usage, onRefreshed }: Props) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function refresh() {
+    setRefreshing(true);
+    setError(null);
+    try {
+      await api.adminUsageRefresh();
+      // After refresh writes to KV, re-read the canonical /admin/usage shape.
+      const next = await api.adminUsage();
+      onRefreshed?.(next);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "새로고침에 실패했어요.";
+      setError(msg);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   if (!usage) {
     return (
       <Card data-testid="usage-card">
@@ -32,10 +55,24 @@ export function UsageCard({ usage }: Props) {
         <CardHeader>
           <CardTitle>리소스 사용량</CardTitle>
           <CardDescription>
-            아직 스냅샷이 없습니다. Cloudflare API 토큰을 등록한 뒤 다음 02:00 KST
-            크론에서 처음 채워집니다.
+            아직 스냅샷이 없습니다. 아래 버튼을 누르거나 02:00 KST 크론을
+            기다리세요.
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <Button
+            type="button"
+            size="sm"
+            onClick={refresh}
+            disabled={refreshing}
+            data-testid="usage-refresh"
+          >
+            {refreshing ? "새로고침 중..." : "지금 새로고침"}
+          </Button>
+          {error ? (
+            <span className="ml-2 text-xs text-destructive">{error}</span>
+          ) : null}
+        </CardContent>
       </Card>
     );
   }
@@ -60,16 +97,31 @@ export function UsageCard({ usage }: Props) {
 
   return (
     <Card data-testid="usage-card">
-      <CardHeader>
-        <CardTitle>리소스 사용량 (무료 한도 기준)</CardTitle>
-        <CardDescription>
-          최근 24h · R2는 30일 누적 · 스냅샷 {generatedLabel}
-        </CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <CardTitle>리소스 사용량 (무료 한도 기준)</CardTitle>
+          <CardDescription>
+            최근 24h · R2는 30일 누적 · 스냅샷 {generatedLabel}
+          </CardDescription>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={refresh}
+          disabled={refreshing}
+          data-testid="usage-refresh"
+        >
+          {refreshing ? "새로고침 중..." : "새로고침"}
+        </Button>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {rows.map((r) => (
           <UsageRow key={r.label} {...r} />
         ))}
+        {error ? (
+          <span className="text-xs text-destructive">{error}</span>
+        ) : null}
       </CardContent>
     </Card>
   );
