@@ -10,6 +10,7 @@ import { CommentSection } from "@/components/buddies/CommentSection";
 import { ReactionBar } from "@/components/buddies/ReactionBar";
 import { DateHeading } from "@/components/editor/DateHeading";
 import { MemoActionsMenu } from "@/components/memo/MemoActionsMenu";
+import { TtsControls } from "@/components/editor/TtsControls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -248,6 +249,8 @@ function MemoViewerInner() {
           </article>
         </CardContent>
       </Card>
+
+      <TtsControls text={memo.body} />
 
       {interactionsAvailable ? (
         <div className="flex flex-col gap-4" data-testid="memo-interactions">
