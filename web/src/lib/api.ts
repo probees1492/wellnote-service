@@ -339,6 +339,34 @@ export const api = {
     request<{ ok: true }>(`/admin/users/${id}/suspend`, { method: "POST" }),
   adminUnsuspend: (id: string) =>
     request<{ ok: true }>(`/admin/users/${id}/unsuspend`, { method: "POST" }),
+  pins: {
+    list: () =>
+      request<{ items: Pin[]; nextCursor: string | null }>("/pins"),
+    create: (body: {
+      name: string;
+      color?: PinColor;
+      visibility?: PinVisibility;
+    }) => request<Pin>("/pins", { method: "POST", body }),
+    get: (id: string) => request<Pin>(`/pins/${id}`),
+    update: (
+      id: string,
+      body: { name?: string; color?: PinColor; visibility?: PinVisibility },
+    ) => request<Pin>(`/pins/${id}`, { method: "PATCH", body }),
+    delete: (id: string) =>
+      request<{ ok: true }>(`/pins/${id}`, { method: "DELETE" }),
+    memos: (id: string, cursor?: string) =>
+      request<{ items: Memo[]; nextCursor: string | null }>(
+        `/pins/${id}/memos`,
+        { query: { cursor } },
+      ),
+  },
+  memos: {
+    setPin: (memoId: string, pinId: string | null) =>
+      request<Memo>(`/memos/${memoId}/pin`, {
+        method: "PATCH",
+        body: { pinId },
+      }),
+  },
 };
 
 // ---------- Types mirrored from backend domain ----------
@@ -359,6 +387,23 @@ export interface Memo {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Optional pin attachment. `null` when not attached. */
+  pinId: string | null;
+}
+
+export type PinColor = "slate" | "yellow" | "red" | "green" | "blue";
+export type PinVisibility = "private" | "public";
+
+export interface Pin {
+  id: string;
+  userId: string;
+  name: string;
+  color: PinColor;
+  visibility: PinVisibility;
+  createdAt: string;
+  updatedAt: string;
+  /** Present on list/get responses; absent after mutations. */
+  memoCount?: number;
 }
 
 export interface MemoWithBody extends Memo {

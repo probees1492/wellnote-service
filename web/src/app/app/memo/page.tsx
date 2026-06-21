@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { DateHeading } from "@/components/editor/DateHeading";
+import { MemoActionsMenu } from "@/components/memo/MemoActionsMenu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -92,7 +93,16 @@ function MemoByDateInner() {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <DateHeading iso={memo.dateKst} />
-        <Badge variant="secondary" className="mt-1">Readonly</Badge>
+        <div className="mt-1 flex items-center gap-2">
+          <Badge variant="secondary">Readonly</Badge>
+          <MemoActionsMenu
+            memoId={memo.id}
+            pinId={memo.pinId ?? null}
+            onPinChanged={(next) =>
+              setMemo((prev) => (prev ? { ...prev, pinId: next } : prev))
+            }
+          />
+        </div>
       </div>
       <Card className="border-0 bg-transparent shadow-none">
         <CardContent

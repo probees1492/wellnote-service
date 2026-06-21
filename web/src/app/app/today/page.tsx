@@ -12,6 +12,7 @@ import {
 } from "@/components/editor/ManuscriptEditor";
 import { SpeechToTextButton } from "@/components/editor/SpeechToTextButton";
 import { WritingProgressBar } from "@/components/editor/WritingProgressBar";
+import { MemoActionsMenu } from "@/components/memo/MemoActionsMenu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -272,6 +273,15 @@ export default function TodayPage() {
               >
                 <Camera className="h-4 w-4" weight="duotone" aria-hidden />
               </Button>
+              {memo ? (
+                <MemoActionsMenu
+                  memoId={memo.id}
+                  pinId={memo.pinId ?? null}
+                  onPinChanged={(next) =>
+                    setMemo((prev) => (prev ? { ...prev, pinId: next } : prev))
+                  }
+                />
+              ) : null}
             </div>
           </div>
           <ManuscriptEditor

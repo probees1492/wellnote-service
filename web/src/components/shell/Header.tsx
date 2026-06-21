@@ -10,6 +10,7 @@ import {
   MagnifyingGlass,
   Gear,
   Shield,
+  PushPin,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,11 @@ export function Header({ variant = "app", showAdminLink = false }: HeaderProps) 
                 <DropdownMenuItem asChild>
                   <Link href="/app/today" className="flex items-center gap-2">
                     <PencilSimple className="h-4 w-4" weight="duotone" aria-hidden />오늘 메모
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/app/pins" className="flex items-center gap-2">
+                    <PushPin className="h-4 w-4" weight="duotone" aria-hidden />핀
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

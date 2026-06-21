@@ -17,6 +17,8 @@ const nextConfig = {
             { source: "/auth/:path*", destination: `${API_TARGET}/auth/:path*` },
             { source: "/memos/:path*", destination: `${API_TARGET}/memos/:path*` },
             { source: "/memos", destination: `${API_TARGET}/memos` },
+            { source: "/pins/:path*", destination: `${API_TARGET}/pins/:path*` },
+            { source: "/pins", destination: `${API_TARGET}/pins` },
             { source: "/activity/:path*", destination: `${API_TARGET}/activity/:path*` },
             { source: "/credit/:path*", destination: `${API_TARGET}/credit/:path*` },
             { source: "/streak/:path*", destination: `${API_TARGET}/streak/:path*` },

@@ -10,6 +10,7 @@ import {
   MagnifyingGlass,
   Gear,
   Shield,
+  PushPin,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { cn } from "@/lib/utils";
@@ -34,6 +35,12 @@ const APP_ITEMS: NavItem[] = [
     label: "오늘 메모",
     icon: PencilSimple,
     match: (p) => !!p?.startsWith("/app/today"),
+  },
+  {
+    href: "/app/pins",
+    label: "핀",
+    icon: PushPin,
+    match: (p) => !!p?.startsWith("/app/pins"),
   },
   {
     href: "/app/search",
