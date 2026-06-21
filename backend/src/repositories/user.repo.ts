@@ -29,6 +29,7 @@ export interface UserRepo {
   create(input: CreateUserInput): Promise<User>;
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
+  findByDisplayName(displayName: string): Promise<User | null>;
   update(id: string, patch: UpdateUserInput): Promise<User>;
   adjustCreditBalance(id: string, delta: number): Promise<number>;
   updateStreak(id: string, patch: UpdateStreakInput): Promise<User>;
@@ -113,6 +114,13 @@ function isUniqueConstraintError(e: unknown): boolean {
   return /UNIQUE constraint failed|D1_ERROR.*UNIQUE/i.test(msg);
 }
 
+function uniqueErrorTarget(e: unknown): "email" | "display_name" | "other" {
+  const msg = (e as Error)?.message ?? String(e);
+  if (/display_name|uq_users_display_name/i.test(msg)) return "display_name";
+  if (/users\.email/i.test(msg)) return "email";
+  return "other";
+}
+
 export class D1UserRepo implements UserRepo {
   constructor(private readonly db: D1Database) {}
 
@@ -140,7 +148,13 @@ export class D1UserRepo implements UserRepo {
         .run();
     } catch (e) {
       if (isUniqueConstraintError(e)) {
-        throw new ConflictError("Email already in use");
+        const target = uniqueErrorTarget(e);
+        if (target === "display_name") {
+          throw new ConflictError("Display name already in use", {
+            field: "displayName",
+          });
+        }
+        throw new ConflictError("Email already in use", { field: "email" });
       }
       throw e;
     }
@@ -164,6 +178,14 @@ export class D1UserRepo implements UserRepo {
     const row = await this.db
       .prepare(`SELECT * FROM users WHERE email = ?`)
       .bind(email.toLowerCase())
+      .first<UserRow>();
+    return row ? mapUser(row) : null;
+  }
+
+  async findByDisplayName(displayName: string): Promise<User | null> {
+    const row = await this.db
+      .prepare(`SELECT * FROM users WHERE LOWER(display_name) = ?`)
+      .bind(displayName.trim().toLowerCase())
       .first<UserRow>();
     return row ? mapUser(row) : null;
   }

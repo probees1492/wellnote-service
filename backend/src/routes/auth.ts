@@ -18,6 +18,11 @@ import { D1UserRepo } from "../repositories/user.repo";
 import { D1KvSessionRepo } from "../repositories/session.repo";
 import { SIGNUP_BONUS_AMOUNT } from "../domain/credit";
 import { D1CreditRepo } from "../repositories/credit.repo";
+import {
+  DISPLAY_NAME_MAX,
+  DISPLAY_NAME_MIN,
+  validateDisplayName,
+} from "../domain/display-name";
 
 export const authRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 authRoutes.onError(onError);
@@ -42,7 +47,7 @@ const signupSchema = z.object({
         2,
       "password must mix at least 2 of: letters, digits, symbols",
     ),
-  displayName: z.string().min(1).max(40).optional(),
+  displayName: z.string().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX),
 });
 
 const loginSchema = z.object({
@@ -175,12 +180,28 @@ authRoutes.post("/signup", async (c) => {
     throw new ValidationError("Invalid signup payload", parsed.error.issues);
   }
   const email = parsed.data.email.toLowerCase();
+  const nameCheck = validateDisplayName(parsed.data.displayName);
+  if (!nameCheck.ok) {
+    throw new ValidationError("Invalid display name", {
+      field: "displayName",
+      reason: nameCheck.reason,
+    });
+  }
+  const displayName = nameCheck.value;
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  const displayName = parsed.data.displayName ?? email.split("@")[0];
 
   if (c.env?.DB) {
     // Production path: persist user via D1.
     const userRepo = new D1UserRepo(c.env.DB);
+    // Pre-check uniqueness so the client gets a clean 409 even before the
+    // unique-index trips (matches the /auth/check-display-name contract).
+    const existing = await userRepo.findByDisplayName(displayName);
+    if (existing) {
+      throw new ConflictError("Display name already in use", {
+        field: "displayName",
+        reason: "taken",
+      });
+    }
     const id = newUserId();
     const user = await userRepo.create({
       id,
@@ -214,7 +235,17 @@ authRoutes.post("/signup", async (c) => {
 
   // Testing-only path.
   if (memUsersByEmail.has(email)) {
-    throw new ConflictError("Email already in use");
+    throw new ConflictError("Email already in use", { field: "email" });
+  }
+  if (
+    [...memUsersByEmail.values()].some(
+      (u) => u.displayName.toLowerCase() === displayName.toLowerCase(),
+    )
+  ) {
+    throw new ConflictError("Display name already in use", {
+      field: "displayName",
+      reason: "taken",
+    });
   }
   const now = new Date().toISOString();
   const user: MemUser = {
@@ -278,6 +309,27 @@ authRoutes.post("/login", async (c) => {
   }
   const tokens = await issueTokensForUser(c.env, user);
   return c.json({ user: safeUser(user), tokens });
+});
+
+authRoutes.get("/check-display-name", async (c) => {
+  const raw = c.req.query("name") ?? "";
+  const result = validateDisplayName(raw);
+  if (!result.ok) {
+    return c.json({ available: false, reason: result.reason });
+  }
+  const name = result.value;
+
+  if (c.env?.DB) {
+    const userRepo = new D1UserRepo(c.env.DB);
+    const taken = await userRepo.findByDisplayName(name);
+    return c.json({ available: !taken, reason: taken ? "taken" : undefined });
+  }
+
+  // Testing-only path.
+  const taken = [...memUsersByEmail.values()].some(
+    (u) => u.displayName.toLowerCase() === name.toLowerCase(),
+  );
+  return c.json({ available: !taken, reason: taken ? "taken" : undefined });
 });
 
 authRoutes.post("/social/google", async (c) => {
@@ -495,6 +547,30 @@ async function verifyAppleIdToken(idToken: string, env: Env | undefined) {
   }
 }
 
+/** Pick a unique displayName for social signups by suffixing collisions.
+ *  Falls back to a random tail after a few attempts so the loop is bounded. */
+async function resolveAvailableDisplayName(
+  userRepo: D1UserRepo,
+  base: string,
+): Promise<string> {
+  const sanitized = (base || "user").replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9_\-.]/g, "");
+  const seed = (sanitized || "user").slice(0, DISPLAY_NAME_MAX - 5) || "user";
+  const candidates = [
+    seed,
+    ...Array.from({ length: 6 }, (_, i) => `${seed}_${i + 2}`),
+    `${seed}_${Math.random().toString(36).slice(2, 6)}`,
+  ];
+  for (const c of candidates) {
+    const fits =
+      c.length >= DISPLAY_NAME_MIN && c.length <= DISPLAY_NAME_MAX;
+    if (!fits) continue;
+    const existing = await userRepo.findByDisplayName(c);
+    if (!existing) return c;
+  }
+  // Last resort: 6-char random tail — guaranteed within 20-char cap.
+  return `user_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function b64urlDecode(s: string): string {
   s = s.replace(/-/g, "+").replace(/_/g, "/");
   while (s.length % 4) s += "=";
@@ -540,10 +616,14 @@ async function upsertSocialUser(
     let u = await userRepo.findByEmail(email);
     if (!u) {
       const id = newUserId();
+      const displayName = await resolveAvailableDisplayName(
+        userRepo,
+        email.split("@")[0],
+      );
       u = await userRepo.create({
         id,
         email,
-        displayName: email.split("@")[0],
+        displayName,
         passwordHash: null,
         role: "user",
         creditBalance: SIGNUP_BONUS_AMOUNT,
@@ -571,10 +651,19 @@ async function upsertSocialUser(
   let user = memUsersByEmail.get(email);
   if (!user) {
     const now = new Date().toISOString();
+    const baseName = email.split("@")[0];
+    const taken = new Set(
+      [...memUsersByEmail.values()].map((u) => u.displayName.toLowerCase()),
+    );
+    let displayName = baseName;
+    let i = 2;
+    while (taken.has(displayName.toLowerCase())) {
+      displayName = `${baseName}_${i++}`;
+    }
     user = {
       id: newUserId(),
       email,
-      displayName: email.split("@")[0],
+      displayName,
       passwordHash: "",
       role: "user",
       emailVerifiedAt: now,
