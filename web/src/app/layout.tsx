@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { GoogleAuthProvider } from "@/components/auth/GoogleAuthProvider";
 import { ThemeProvider } from "@/components/shell/theme-provider";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          <GoogleAuthProvider>{children}</GoogleAuthProvider>
+          <LocaleProvider>
+            <GoogleAuthProvider>{children}</GoogleAuthProvider>
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>

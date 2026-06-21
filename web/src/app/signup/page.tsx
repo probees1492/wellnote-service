@@ -22,10 +22,10 @@ import {
   DISPLAY_NAME_MAX,
   DISPLAY_NAME_MIN,
   type DisplayNameReason,
-  displayNameReasonLabel,
   useAuth,
   validateDisplayNameClient,
 } from "@/lib/auth-store";
+import { useT } from "@/lib/i18n/LocaleProvider";
 
 type CheckState =
   | { status: "idle" }
@@ -35,6 +35,7 @@ type CheckState =
 
 export default function SignupPage() {
   const router = useRouter();
+  const t = useT();
   const signup = useAuth((s) => s.signup);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,20 +91,20 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
     if (password.length < 8) {
-      setError("비밀번호는 8자 이상이어야 합니다.");
+      setError(t("signup.password_short"));
       return;
     }
     if (password !== confirm) {
-      setError("비밀번호 확인이 일치하지 않습니다.");
+      setError(t("signup.password_mismatch"));
       return;
     }
     const local = validateDisplayNameClient(displayName);
     if (!local.ok) {
-      setError(displayNameReasonLabel(local.reason));
+      setError(t(`displayname.reason.${local.reason}`));
       return;
     }
     if (check.status === "unavailable") {
-      setError(displayNameReasonLabel(check.reason));
+      setError(t(`displayname.reason.${check.reason}`));
       return;
     }
     setLoading(true);
@@ -111,7 +112,7 @@ export default function SignupPage() {
       await signup(email, password, local.value, { remember });
       router.push("/app");
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "가입에 실패했습니다.";
+      const msg = e instanceof Error ? e.message : t("signup.generic_error");
       setError(msg);
     } finally {
       setLoading(false);
@@ -132,8 +133,8 @@ export default function SignupPage() {
             <div className="mb-2 flex justify-center">
               <LogoWordmark size="lg" />
             </div>
-            <CardTitle className="text-xl">가입</CardTitle>
-            <CardDescription>매일의 기록을 시작해 보세요.</CardDescription>
+            <CardTitle className="text-xl">{t("signup.title")}</CardTitle>
+            <CardDescription>{t("signup.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form
@@ -142,7 +143,7 @@ export default function SignupPage() {
               aria-label="signup-form"
             >
               <div className="flex flex-col gap-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="email">{t("signup.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -153,7 +154,7 @@ export default function SignupPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="password">비밀번호</Label>
+                <Label htmlFor="password">{t("signup.password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -163,11 +164,11 @@ export default function SignupPage() {
                   data-testid="signup-password"
                 />
                 <span className="text-xs text-muted-foreground">
-                  8자 이상, 영문/숫자/특수문자 중 2종 이상
+                  {t("signup.password_hint")}
                 </span>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="confirm">비밀번호 확인</Label>
+                <Label htmlFor="confirm">{t("signup.confirm")}</Label>
                 <Input
                   id="confirm"
                   type="password"
@@ -178,7 +179,7 @@ export default function SignupPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="displayName">필명</Label>
+                <Label htmlFor="displayName">{t("signup.displayname")}</Label>
                 <Input
                   id="displayName"
                   required
@@ -203,7 +204,7 @@ export default function SignupPage() {
                   onCheckedChange={setRemember}
                   data-testid="signup-remember"
                 />
-                <span className="select-none text-foreground">로그인 유지</span>
+                <span className="select-none text-foreground">{t("signup.remember")}</span>
               </label>
 
               {error ? (
@@ -220,13 +221,13 @@ export default function SignupPage() {
                 disabled={submitDisabled}
                 data-testid="signup-submit"
               >
-                {loading ? "가입 중..." : "가입하기"}
+                {loading ? t("signup.submitting") : t("signup.submit")}
               </Button>
             </form>
 
             <div className="mt-6 flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted-foreground">또는</span>
+              <span className="text-xs text-muted-foreground">{t("common.or")}</span>
               <div className="h-px flex-1 bg-border" />
             </div>
             <div className="mt-4 flex flex-col gap-2">
@@ -237,14 +238,14 @@ export default function SignupPage() {
                 testId="google-signup"
               />
               <Button variant="outline" disabled>
-                Apple로 계속하기 (Coming soon)
+                {t("signup.apple_coming")}
               </Button>
             </div>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
-              이미 계정이 있으신가요?{" "}
+              {t("signup.have_account")}{" "}
               <Link href="/login" className="font-medium text-foreground underline">
-                로그인
+                {t("signup.login_link")}
               </Link>
             </p>
           </CardContent>
@@ -261,10 +262,11 @@ function DisplayNameHelp({
   id: string;
   state: CheckState;
 }) {
+  const t = useT();
   if (state.status === "idle") {
     return (
       <span id={id} className="text-xs text-muted-foreground">
-        2–20자, 한글·영문·숫자·공백·_-. 만 사용
+        {t("signup.displayname_hint")}
       </span>
     );
   }
@@ -276,7 +278,7 @@ function DisplayNameHelp({
         data-testid="displayname-check"
         data-state="checking"
       >
-        확인 중...
+        {t("displayname.checking")}
       </span>
     );
   }
@@ -288,7 +290,7 @@ function DisplayNameHelp({
         data-testid="displayname-check"
         data-state="available"
       >
-        사용 가능한 필명입니다.
+        {t("displayname.available")}
       </span>
     );
   }
@@ -300,7 +302,7 @@ function DisplayNameHelp({
       data-state="unavailable"
       data-reason={state.reason}
     >
-      {displayNameReasonLabel(state.reason)}
+      {t(`displayname.reason.${state.reason}`)}
     </span>
   );
 }

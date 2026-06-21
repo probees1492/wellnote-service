@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
+import { LocaleSwitcher } from "@/components/profile/LocaleSwitcher";
 import { RenameDisplayNameDialog } from "@/components/profile/RenameDisplayNameDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +17,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { api, type ApiUser, type CreditTx } from "@/lib/api";
 import { useAuth } from "@/lib/auth-store";
+import { useT } from "@/lib/i18n/LocaleProvider";
 import {
   DEFAULT_PREFS,
   type EditorPrefs,
@@ -28,6 +30,7 @@ import { cn } from "@/lib/utils";
 const REMINDER_KEY = "wn:reminderOptIn";
 
 export default function SettingsPage() {
+  const t = useT();
   const user = useAuth((s) => s.user);
   const refreshMe = useAuth((s) => s.refreshMe);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -119,7 +122,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">설정</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t("settings.title")}</h1>
       {user ? (
         <RenameDisplayNameDialog
           open={renameOpen}
@@ -130,18 +133,18 @@ export default function SettingsPage() {
       ) : null}
       <Card>
         <CardHeader>
-          <CardTitle>프로필</CardTitle>
+          <CardTitle>{t("settings.profile")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 text-sm">
           {user ? (
             <AvatarPicker user={user} onChanged={() => void refreshMe()} />
           ) : null}
           <div className="flex justify-between py-1">
-            <span className="text-muted-foreground">이메일</span>
+            <span className="text-muted-foreground">{t("settings.email")}</span>
             <span>{user?.email}</span>
           </div>
           <div className="flex items-center justify-between py-1">
-            <span className="text-muted-foreground">필명</span>
+            <span className="text-muted-foreground">{t("settings.displayname")}</span>
             <div className="flex items-center gap-2">
               <span>{user?.displayName}</span>
               {user ? (
@@ -151,15 +154,24 @@ export default function SettingsPage() {
                   onClick={() => setRenameOpen(true)}
                   data-testid="rename-displayname-button"
                 >
-                  변경
+                  {t("settings.rename_button")}
                 </Button>
               ) : null}
             </div>
           </div>
           <div className="flex justify-between py-1">
-            <span className="text-muted-foreground">역할</span>
+            <span className="text-muted-foreground">{t("settings.role")}</span>
             <span>{user?.role}</span>
           </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("settings.language")}</CardTitle>
+          <CardDescription>{t("settings.language_desc")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LocaleSwitcher />
         </CardContent>
       </Card>
       <Card>
