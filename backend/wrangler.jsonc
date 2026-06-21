@@ -55,7 +55,7 @@
         "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
-        { "pattern": "api-dev.wellnote.io/*", "zone_name": "wellnote.io" }
+        { "pattern": "api-dev.wellnote.io", "custom_domain": true }
       ],
       "d1_databases": [
         {
@@ -80,12 +80,11 @@
       "ai": {
         "binding": "AI"
       },
-      "triggers": {
-        "crons": [
-          "0 15 * * *",
-          "0 19 * * *"
-        ]
-      }
+      // No cron triggers on this env — Cloudflare's free-plan account limit
+      // is 5 crons total, so we keep the two daily jobs (readonly sweep +
+      // prompt pool + usage snapshot piggyback) only on dev. Re-enable here
+      // once real prod traffic starts.
+      "triggers": { "crons": [] }
     },
 
     "stage": {
@@ -95,7 +94,7 @@
         "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
-        { "pattern": "api-stage.wellnote.io/*", "zone_name": "wellnote.io" }
+        { "pattern": "api-stage.wellnote.io", "custom_domain": true }
       ],
       "d1_databases": [
         {
@@ -120,12 +119,11 @@
       "ai": {
         "binding": "AI"
       },
-      "triggers": {
-        "crons": [
-          "0 15 * * *",
-          "0 19 * * *"
-        ]
-      }
+      // No cron triggers on this env — Cloudflare's free-plan account limit
+      // is 5 crons total, so we keep the two daily jobs (readonly sweep +
+      // prompt pool + usage snapshot piggyback) only on dev. Re-enable here
+      // once real prod traffic starts.
+      "triggers": { "crons": [] }
     },
 
     "prod": {
@@ -135,7 +133,7 @@
         "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
-        { "pattern": "api.wellnote.io/*", "zone_name": "wellnote.io" }
+        { "pattern": "api.wellnote.io", "custom_domain": true }
       ],
       "d1_databases": [
         {
@@ -160,12 +158,8 @@
       "ai": {
         "binding": "AI"
       },
-      "triggers": {
-        "crons": [
-          "0 15 * * *",
-          "0 19 * * *"
-        ]
-      }
+      // No cron triggers on this env (see stage env comment).
+      "triggers": { "crons": [] }
     }
   }
 }
