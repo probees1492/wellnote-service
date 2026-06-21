@@ -68,8 +68,8 @@ export function LogoWordmark({
   } as const;
   return (
     <svg
-      viewBox="0 0 540 120"
-      preserveAspectRatio="xMinYMid meet"
+      viewBox="0 0 410 120"
+      preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label="We'llNote"
       className={cn("w-auto text-foreground", sizes[size], className)}

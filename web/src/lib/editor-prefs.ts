@@ -1,10 +1,9 @@
 /**
  * Editor user preferences, persisted to localStorage.
  *
- * Defaults follow the Atomic Habits "make it easy" rule: every decoration is
- * OFF by default so the user lands on a clean, distraction-free page.
- * Power users can opt back in to the legacy "정통 200자" experience from
- * Settings → 에디터 → 고급.
+ * Defaults turn ON every advanced decoration so the editor lands on a
+ * full "calligraphic journal" experience out of the box. Users can dial
+ * any of them off from Settings → 에디터 — 고급.
  */
 
 export type GridStyle = "off" | "manuscript" | "lines" | "dots";
@@ -16,24 +15,26 @@ export interface EditorPrefs {
   inkCursor: boolean;
   penSound: boolean;
   sealCountdown: boolean;
-  /** Final-30s countdown + 封 stamp animation at KST midnight. Default OFF. */
+  /** Final-30s countdown + 封 stamp animation at KST midnight. */
   sealStamp: boolean;
-  /** Optional warm "paper/parchment" background card tone. Default OFF. */
+  /** Optional warm "paper/parchment" background card tone. */
   paperTone: boolean;
 }
 
 export const DEFAULT_PREFS: EditorPrefs = {
-  gridStyle: "off",
-  typewriter: false,
-  firstLineIndent: false,
-  inkCursor: false,
-  penSound: false,
-  sealCountdown: false,
-  sealStamp: false,
-  paperTone: false,
+  gridStyle: "lines",
+  typewriter: true,
+  firstLineIndent: true,
+  inkCursor: true,
+  penSound: true,
+  sealCountdown: true,
+  sealStamp: true,
+  paperTone: true,
 };
 
-const STORAGE_KEY = "wn:editorPrefs:v1";
+// `v2` bump forces a one-time reset to the new "everything on" defaults
+// for users who had the previous "everything off" v1 prefs in storage.
+const STORAGE_KEY = "wn:editorPrefs:v2";
 
 export function loadEditorPrefs(): EditorPrefs {
   if (typeof window === "undefined") return DEFAULT_PREFS;
