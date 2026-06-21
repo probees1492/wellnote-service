@@ -11,6 +11,7 @@ import { pinRoutes } from "./routes/pins";
 import { userRoutes } from "./routes/users";
 import { promptRoutes } from "./routes/prompts";
 import { buddyRoutes } from "./routes/buddies";
+import { interactionRoutes } from "./routes/interactions";
 import { scheduled as dailyReadonlyScheduled } from "./cron/daily-readonly";
 import { scheduled as dailyPromptsScheduled } from "./cron/daily-prompts";
 import { onError } from "./lib/error-handler";
@@ -57,6 +58,9 @@ app.route("/pins", pinRoutes);
 app.route("/users", userRoutes);
 app.route("/prompts", promptRoutes);
 app.route("/buddies", buddyRoutes);
+// Reactions + short comments mount under /memos/* — co-located with memo routes
+// so the public URLs read naturally: /memos/:id/reactions, /memos/:id/comments.
+app.route("/", interactionRoutes);
 
 /** Dispatch the scheduled handler based on which cron fired.
  *  - "0 15 * * *" (15:00 UTC / 00:00 KST) → daily-readonly sweep
