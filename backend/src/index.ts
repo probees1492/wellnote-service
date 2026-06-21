@@ -21,8 +21,14 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  // Cloudflare Pages preview + production *.pages.dev hostnames.
   /^https:\/\/wellnote-web-(dev|stage|prod)\.pages\.dev$/,
   /^https:\/\/[\w-]+\.wellnote-web-(dev|stage|prod)\.pages\.dev$/,
+  // Production custom domains on wellnote.io.
+  "https://wellnote.io",
+  "https://www.wellnote.io",
+  "https://dev.wellnote.io",
+  "https://stage.wellnote.io",
 ];
 
 app.use(

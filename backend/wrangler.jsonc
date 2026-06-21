@@ -55,8 +55,7 @@
         "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
-        // Optional — set up via Cloudflare dashboard or uncomment after DNS is ready
-        // { "pattern": "api-dev.wellnote.app/*", "zone_name": "wellnote.app" }
+        { "pattern": "api-dev.wellnote.io/*", "zone_name": "wellnote.io" }
       ],
       "d1_databases": [
         {
@@ -96,7 +95,7 @@
         "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
-        // { "pattern": "api-stage.wellnote.app/*", "zone_name": "wellnote.app" }
+        { "pattern": "api-stage.wellnote.io/*", "zone_name": "wellnote.io" }
       ],
       "d1_databases": [
         {
@@ -136,7 +135,7 @@
         "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
-        // { "pattern": "api.wellnote.app/*", "zone_name": "wellnote.app" }
+        { "pattern": "api.wellnote.io/*", "zone_name": "wellnote.io" }
       ],
       "d1_databases": [
         {
