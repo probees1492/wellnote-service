@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 import { cn } from "@/lib/utils";
-import { LogoMark, LogoWordmark } from "@/components/brand/Logo";
+import { LogoWordmark } from "@/components/brand/Logo";
 
 interface NavItem {
   href: string;
@@ -121,8 +121,9 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
         }}
         data-testid="sidebar"
         data-state={expanded ? "expanded" : "collapsed"}
+        // z-50 keeps the expanded panel above the sticky Header (z-30).
         className={cn(
-          "absolute left-0 top-0 z-30 flex h-full flex-col border-r bg-card/95 backdrop-blur-sm",
+          "absolute left-0 top-0 z-50 flex h-full flex-col border-r bg-card/95 backdrop-blur-sm",
           "overflow-hidden transition-[width] duration-200 ease-out",
           expanded ? `${EXPANDED_W} shadow-lg` : COLLAPSED_W,
         )}
@@ -133,9 +134,16 @@ export function Sidebar({ variant = "app", showAdminLink = false }: SidebarProps
             className="flex items-center gap-2 overflow-hidden"
             aria-label="WellNote 홈"
           >
-            {/* Always-visible mark — sits in the icon rail when collapsed and
-                anchors the lockup when expanded. */}
-            <LogoMark className="h-6 w-6 shrink-0" />
+            {/* Always-visible launcher icon (same image as the mobile app
+                icon — cream background + W' brush). 32×32 sits perfectly
+                inside the 56px collapsed rail. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-mark-1024.png"
+              alt=""
+              aria-hidden
+              className="h-8 w-8 shrink-0 rounded-md"
+            />
             <span
               className={cn(
                 "flex items-center gap-2 whitespace-nowrap transition-opacity duration-200",
