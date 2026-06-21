@@ -23,6 +23,10 @@ export interface Env {
   GOOGLE_CLIENT_ID?: string;
   /** Apple Sign-In client id. */
   APPLE_CLIENT_ID?: string;
+  /** Cloudflare account id (used by usage-snapshot cron). Public var. */
+  CF_ACCOUNT_ID?: string;
+  /** Bearer token with `Account Analytics: Read`. Secret. */
+  CF_ANALYTICS_TOKEN?: string;
 
   // --- vars ---
   ENVIRONMENT: "dev" | "stage" | "prod";

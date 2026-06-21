@@ -39,18 +39,21 @@
   "triggers": {
     "crons": [
       "0 15 * * *",
+      "0 17 * * *",
       "0 19 * * *"
     ]
   },
   "vars": {
-    "ENVIRONMENT": "dev"
+    "ENVIRONMENT": "dev",
+    "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
   },
 
   "env": {
     "dev": {
       "name": "wellnote-api-dev",
       "vars": {
-        "ENVIRONMENT": "dev"
+        "ENVIRONMENT": "dev",
+        "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
         // Optional — set up via Cloudflare dashboard or uncomment after DNS is ready
@@ -82,6 +85,7 @@
       "triggers": {
         "crons": [
           "0 15 * * *",
+          "0 17 * * *",
           "0 19 * * *"
         ]
       }
@@ -90,7 +94,8 @@
     "stage": {
       "name": "wellnote-api-stage",
       "vars": {
-        "ENVIRONMENT": "stage"
+        "ENVIRONMENT": "stage",
+        "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
         // { "pattern": "api-stage.wellnote.app/*", "zone_name": "wellnote.app" }
@@ -121,6 +126,7 @@
       "triggers": {
         "crons": [
           "0 15 * * *",
+          "0 17 * * *",
           "0 19 * * *"
         ]
       }
@@ -129,7 +135,8 @@
     "prod": {
       "name": "wellnote-api-prod",
       "vars": {
-        "ENVIRONMENT": "prod"
+        "ENVIRONMENT": "prod",
+        "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
       },
       "routes": [
         // { "pattern": "api.wellnote.app/*", "zone_name": "wellnote.app" }
@@ -160,6 +167,7 @@
       "triggers": {
         "crons": [
           "0 15 * * *",
+          "0 17 * * *",
           "0 19 * * *"
         ]
       }

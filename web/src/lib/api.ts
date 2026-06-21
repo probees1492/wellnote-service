@@ -410,6 +410,7 @@ export const api = {
     request<{ ok: true }>(`/admin/users/${id}/unsuspend`, { method: "POST" }),
   adminStatsOverview: () =>
     request<AdminStatsOverview>("/admin/stats/overview"),
+  adminUsage: () => request<AdminUsage>("/admin/usage"),
   pins: {
     list: () =>
       request<{ items: Pin[]; nextCursor: string | null }>("/pins"),
@@ -618,6 +619,47 @@ export interface AdminStatsOverview {
   avgCredits: number;
   totalFollows: number;
   generatedAt: string;
+}
+
+export interface AdminUsageQuotas {
+  workersRequestsPerDay: number;
+  workersAiNeuronsPerDay: number;
+  d1RowsReadPerDay: number;
+  d1RowsWrittenPerDay: number;
+  kvReadsPerDay: number;
+  kvWritesPerDay: number;
+  kvDeletesPerDay: number;
+  r2ClassAOpsPerMonth: number;
+  r2ClassBOpsPerMonth: number;
+  r2StorageBytes: number;
+}
+
+export interface AdminUsageSnapshot {
+  generatedAt: string;
+  storedAt: string;
+  windowStart: string;
+  windowEnd: string;
+  windowHours: number;
+  workers: { requests: number | null; errors: number | null } | null;
+  workersAi: { neurons: number | null } | null;
+  d1: {
+    readQueries: number | null;
+    writeQueries: number | null;
+    rowsRead: number | null;
+    rowsWritten: number | null;
+  } | null;
+  kv: { reads: number | null; writes: number | null; deletes: number | null } | null;
+  r2: {
+    classAOps: number | null;
+    classBOps: number | null;
+    storageBytes: number | null;
+  } | null;
+}
+
+export interface AdminUsage {
+  source: "kv" | "missing" | "corrupt";
+  quotas: AdminUsageQuotas;
+  snapshot: AdminUsageSnapshot | null;
 }
 
 // ---------- Buddy graph & memo interactions ----------

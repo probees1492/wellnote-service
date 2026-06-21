@@ -6,9 +6,11 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UsageCard } from "@/components/admin/UsageCard";
 import {
   api,
   type AdminStatsOverview,
+  type AdminUsage,
   type AdminUserRow,
 } from "@/lib/api";
 
@@ -17,6 +19,7 @@ export default function AdminDashboard() {
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [stats, setStats] = useState<AdminStatsOverview | null>(null);
+  const [usage, setUsage] = useState<AdminUsage | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -45,6 +48,12 @@ export default function AdminDashboard() {
       } catch {
         /* silent — primary surface (user list) still works */
       }
+      try {
+        const u = await api.adminUsage();
+        if (alive) setUsage(u);
+      } catch {
+        /* silent */
+      }
     })();
     return () => {
       alive = false;
@@ -56,6 +65,8 @@ export default function AdminDashboard() {
       <h1 className="text-2xl font-semibold tracking-tight">Admin 대시보드</h1>
 
       <KpiGrid stats={stats} />
+
+      <UsageCard usage={usage} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="admin-q">이메일로 검색</Label>

@@ -7,6 +7,7 @@ import { ValidationError, NotFoundError } from "../lib/errors";
 import { getCreditService } from "./credits";
 import { D1UserRepo } from "../repositories/user.repo";
 import { todayKst } from "../lib/time";
+import { USAGE_KV_KEY, type UsageRecord } from "../cron/usage-snapshot";
 
 export const adminRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -186,4 +187,41 @@ adminRoutes.get("/stats/overview", async (c) => {
 
 adminRoutes.get("/audit-log", async (c) => {
   return c.json({ items: [], nextCursor: null });
+});
+
+/**
+ * GET /admin/usage — latest Cloudflare resource-usage snapshot (yesterday's
+ * 24h window, plus 30d for R2 storage). Served from KV; the daily cron
+ * populates it. Returns `source: "missing"` until the first cron run
+ * lands a record OR until the CF_ANALYTICS_TOKEN secret is provisioned.
+ *
+ * Quotas hardcoded to the current Free-tier limits — if Cloudflare raises
+ * them, just bump these numbers; the UI computes percentages from them.
+ */
+adminRoutes.get("/usage", async (c) => {
+  const quotas = {
+    workersRequestsPerDay: 100_000,
+    workersAiNeuronsPerDay: 10_000,
+    d1RowsReadPerDay: 5_000_000,
+    d1RowsWrittenPerDay: 100_000,
+    kvReadsPerDay: 100_000,
+    kvWritesPerDay: 1_000,
+    kvDeletesPerDay: 1_000,
+    r2ClassAOpsPerMonth: 10_000_000,
+    r2ClassBOpsPerMonth: 10_000_000,
+    r2StorageBytes: 10 * 1024 * 1024 * 1024, // 10 GiB
+  };
+  if (!c.env?.SESSION_KV) {
+    return c.json({ source: "missing", quotas, snapshot: null });
+  }
+  const raw = await c.env.SESSION_KV.get(USAGE_KV_KEY);
+  if (!raw) {
+    return c.json({ source: "missing", quotas, snapshot: null });
+  }
+  try {
+    const snapshot = JSON.parse(raw) as UsageRecord;
+    return c.json({ source: "kv", quotas, snapshot });
+  } catch {
+    return c.json({ source: "corrupt", quotas, snapshot: null });
+  }
 });
