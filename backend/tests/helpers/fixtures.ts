@@ -26,6 +26,7 @@ export function makeUser(overrides: Partial<User> = {}): User {
     avatarObjectKey: null,
     avatarContentType: null,
     avatarUpdatedAt: null,
+    topicPreferences: "[]",
     ...overrides,
   };
 }

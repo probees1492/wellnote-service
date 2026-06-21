@@ -80,6 +80,7 @@ interface UserRow {
   avatar_object_key?: string | null;
   avatar_content_type?: string | null;
   avatar_updated_at?: string | null;
+  topic_preferences?: string | null;
 }
 
 interface SocialRow {
@@ -110,6 +111,7 @@ function mapUser(row: UserRow): User {
     avatarObjectKey: row.avatar_object_key ?? null,
     avatarContentType: row.avatar_content_type ?? null,
     avatarUpdatedAt: row.avatar_updated_at ?? null,
+    topicPreferences: row.topic_preferences ?? "[]",
   };
 }
 

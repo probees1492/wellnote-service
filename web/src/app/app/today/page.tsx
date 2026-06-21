@@ -10,6 +10,7 @@ import {
   ManuscriptEditor,
   type ManuscriptEditorHandle,
 } from "@/components/editor/ManuscriptEditor";
+import { PromptSeed } from "@/components/editor/PromptSeed";
 import { SpeechToTextButton } from "@/components/editor/SpeechToTextButton";
 import { WritingProgressBar } from "@/components/editor/WritingProgressBar";
 import { MemoActionsMenu } from "@/components/memo/MemoActionsMenu";
@@ -239,6 +240,29 @@ export default function TodayPage() {
         >
           {milestoneToast}
         </div>
+      ) : null}
+
+      {memo && body.trim().length === 0 ? (
+        <PromptSeed
+          onPick={(text) => {
+            // Seed the editor with the suggested sentence + space, focus, and
+            // park the cursor after the seed so the user can continue typing.
+            const seed = text.endsWith(" ") ? text : `${text} `;
+            const next = seed;
+            latestBodyRef.current = next;
+            setBody(next);
+            scheduleSave();
+            requestAnimationFrame(() => {
+              const ta = editorRef.current?.textarea;
+              try {
+                editorRef.current?.focus();
+                ta?.setSelectionRange(next.length, next.length);
+              } catch {
+                /* ignore */
+              }
+            });
+          }}
+        />
       ) : null}
 
       <Card className="border-0 bg-transparent shadow-none">

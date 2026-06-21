@@ -327,6 +327,18 @@ export const api = {
   },
   deleteAvatar: () =>
     request<{ user: ApiUser }>("/users/me/avatar", { method: "DELETE" }),
+  todayPrompts: () =>
+    request<{
+      dateKst: string;
+      appliedTopics: string[];
+      items: { topic: string; text: string }[];
+      topics: { code: string; ko: string }[];
+    }>("/prompts/today"),
+  setPromptPreferences: (topics: string[]) =>
+    request<{ topics: string[] }>("/prompts/preferences", {
+      method: "PUT",
+      body: { topics },
+    }),
   login: (body: { email: string; password: string }) =>
     request<{ user: ApiUser; tokens: Tokens }>("/auth/login", {
       method: "POST",

@@ -27,6 +27,8 @@ export interface User {
   avatarContentType: string | null;
   /** ISO timestamp of the last avatar change — used as a cache-bust token. */
   avatarUpdatedAt: string | null;
+  /** JSON-encoded array of `PromptTopic` codes for daily-prompt filtering. */
+  topicPreferences: string;
 }
 
 export type SocialProvider = "email" | "google" | "apple";

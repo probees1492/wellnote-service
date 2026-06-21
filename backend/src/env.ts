@@ -7,8 +7,10 @@ export interface Env {
   DB: D1Database;
   /** R2 bucket for encrypted memo blobs. */
   MEMO_BUCKET: R2Bucket;
-  /** KV for sessions/rate-limit. */
+  /** KV for sessions/rate-limit + daily prompt pool (`prompt-pool:YYYY-MM-DD`). */
   SESSION_KV: KVNamespace;
+  /** Workers AI binding — Qwen2.5-7B for daily writing prompt generation. */
+  AI: Ai;
 
   // --- secrets (set via `wrangler secret put`) ---
   /** JWT signing secret (HS256). */

@@ -30,9 +30,16 @@
       "id": "a0f3eff539ff4fd7975b78ae1e3893fe"
     }
   ],
+  "ai": {
+    "binding": "AI"
+  },
+  // Crons (UTC):
+  //   15:00 UTC = 00:00 KST  → daily readonly sweep (memos -> readonly, streaks)
+  //   19:00 UTC = 04:00 KST  → prompt-pool generation (Workers AI Qwen2.5-7b)
   "triggers": {
     "crons": [
-      "0 15 * * *"
+      "0 15 * * *",
+      "0 19 * * *"
     ]
   },
   "vars": {
@@ -69,9 +76,13 @@
           "id": "a0f3eff539ff4fd7975b78ae1e3893fe"
         }
       ],
+      "ai": {
+        "binding": "AI"
+      },
       "triggers": {
         "crons": [
-          "0 15 * * *"
+          "0 15 * * *",
+          "0 19 * * *"
         ]
       }
     },
@@ -104,9 +115,13 @@
           "id": "effc4ab6df3546bf80191fd340d866a6"
         }
       ],
+      "ai": {
+        "binding": "AI"
+      },
       "triggers": {
         "crons": [
-          "0 15 * * *"
+          "0 15 * * *",
+          "0 19 * * *"
         ]
       }
     },
@@ -139,9 +154,13 @@
           "id": "85719f1cb64d4bcca872e3da59bb7974"
         }
       ],
+      "ai": {
+        "binding": "AI"
+      },
       "triggers": {
         "crons": [
-          "0 15 * * *"
+          "0 15 * * *",
+          "0 19 * * *"
         ]
       }
     }

@@ -83,6 +83,7 @@ interface MemUser {
   avatarObjectKey: string | null;
   avatarContentType: string | null;
   avatarUpdatedAt: string | null;
+  topicPreferences: string;
 }
 
 export const memUsers = new Map<string, MemUser>();
@@ -280,6 +281,7 @@ authRoutes.post("/signup", async (c) => {
     avatarObjectKey: null,
     avatarContentType: null,
     avatarUpdatedAt: null,
+    topicPreferences: "[]",
   };
   memUsers.set(user.id, user);
   memUsersByEmail.set(email, user);
@@ -696,6 +698,7 @@ async function upsertSocialUser(
       avatarObjectKey: null,
       avatarContentType: null,
       avatarUpdatedAt: null,
+      topicPreferences: "[]",
     };
     memUsers.set(user.id, user);
     memUsersByEmail.set(email, user);

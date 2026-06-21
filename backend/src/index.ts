@@ -9,7 +9,9 @@ import { adminRoutes } from "./routes/admin";
 import { streakRoutes } from "./routes/streak";
 import { pinRoutes } from "./routes/pins";
 import { userRoutes } from "./routes/users";
+import { promptRoutes } from "./routes/prompts";
 import { scheduled as dailyReadonlyScheduled } from "./cron/daily-readonly";
+import { scheduled as dailyPromptsScheduled } from "./cron/daily-prompts";
 import { onError } from "./lib/error-handler";
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -52,8 +54,27 @@ app.route("/admin", adminRoutes);
 app.route("/streak", streakRoutes);
 app.route("/pins", pinRoutes);
 app.route("/users", userRoutes);
+app.route("/prompts", promptRoutes);
+
+/** Dispatch the scheduled handler based on which cron fired.
+ *  - "0 15 * * *" (15:00 UTC / 00:00 KST) → daily-readonly sweep
+ *  - "0 19 * * *" (19:00 UTC / 04:00 KST) → daily prompt-pool generation
+ *  Falls back to daily-readonly if the cron string is unknown so we never
+ *  silently drop a scheduled run.
+ */
+const scheduled: ExportedHandlerScheduledHandler<Env> = (
+  controller,
+  env,
+  ctx,
+) => {
+  const cron = controller?.cron ?? "";
+  if (cron === "0 19 * * *") {
+    return dailyPromptsScheduled(controller, env, ctx);
+  }
+  return dailyReadonlyScheduled(controller, env, ctx);
+};
 
 export default {
   fetch: app.fetch,
-  scheduled: dailyReadonlyScheduled,
+  scheduled,
 } satisfies ExportedHandler<Env>;
