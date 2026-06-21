@@ -242,11 +242,7 @@ export default function TodayPage() {
 
       <Card className="border-0 bg-transparent shadow-none">
         <CardContent className="flex flex-col gap-3 p-0">
-          <WritingProgressBar
-            charCount={body.length}
-            onMilestone={setMilestoneToast}
-          />
-          <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="flex items-center justify-between gap-3">
             {interim ? (
               <span
                 className="flex-1 truncate font-serif text-sm italic text-muted-foreground"
@@ -292,9 +288,14 @@ export default function TodayPage() {
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-end text-sm text-muted-foreground">
+      <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
         <span data-testid="char-count">{body.length}자</span>
-        <span className="mx-2">·</span>
+        <span aria-hidden>·</span>
+        <WritingProgressBar
+          charCount={body.length}
+          onMilestone={setMilestoneToast}
+        />
+        <span aria-hidden>·</span>
         <span>1일 1메모</span>
       </div>
     </div>

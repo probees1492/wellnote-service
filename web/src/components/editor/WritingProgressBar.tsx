@@ -6,15 +6,14 @@ import { cn } from "@/lib/utils";
 import { todayKst } from "@/lib/time";
 
 /**
- * Top-of-editor progress bar tied to the daily writing milestones.
+ * Daily writing milestones (per character count). When the user crosses
+ * one for the first time *today* we fire:
+ *   - a 20 ms haptic on touch devices,
+ *   - a one-shot toast via `onMilestone(label)`.
+ * Dedupe is per-KST-day, persisted to localStorage.
  *
- * Milestones: 30 (streak 확보), 100 (한 단락 완성), 500 (긴 호흡).
- * When the user crosses a milestone for the first time today we trigger:
- *  - a short haptic on touch devices (`navigator.vibrate?.(20)`),
- *  - a one-shot toast via the optional `onMilestone(label)` callback.
- *
- * Per-day dedupe lives in localStorage so refreshing or revisiting later in
- * the day does not re-fire the toasts.
+ * The 500-character ceiling drives the percent label that lives in the
+ * editor's bottom-right corner.
  */
 const MILESTONES = [
   { at: 30, label: "오늘 streak 확보 ✓" },
@@ -24,18 +23,16 @@ const MILESTONES = [
 
 const MAX_BAR = 500;
 
-export function WritingProgressBar({
-  charCount,
-  onMilestone,
-  className,
-}: {
-  charCount: number;
-  onMilestone?: (label: string) => void;
-  className?: string;
-}) {
-  const lastFiredRef = useRef<Set<number>>(new Set());
+function milestoneKey(today: string, at: number): string {
+  return `wn:milestone:${today}:${at}`;
+}
 
-  // Hydrate dedupe set from localStorage once on mount.
+function useWritingMilestones(
+  charCount: number,
+  onMilestone?: (label: string) => void,
+) {
+  const lastFiredRef = useRef<Set<number>>(new Set());
+  // Hydrate dedupe set from localStorage on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const today = todayKst();
@@ -51,8 +48,7 @@ export function WritingProgressBar({
     }
     lastFiredRef.current = next;
   }, []);
-
-  // Fire callbacks + persist when a new milestone is reached.
+  // Fire callback + persist whenever a new milestone is reached.
   useEffect(() => {
     const today = todayKst();
     for (const m of MILESTONES) {
@@ -72,40 +68,43 @@ export function WritingProgressBar({
       }
     }
   }, [charCount, onMilestone]);
-
-  const percent = Math.min(100, (charCount / MAX_BAR) * 100);
-
-  return (
-    <div
-      className={cn("relative h-1.5 w-full overflow-hidden rounded-full bg-muted", className)}
-      data-testid="writing-progress"
-      aria-label="오늘의 글쓰기 진행"
-      role="progressbar"
-      aria-valuenow={Math.min(charCount, MAX_BAR)}
-      aria-valuemin={0}
-      aria-valuemax={MAX_BAR}
-    >
-      <div
-        className="h-full rounded-full bg-orange-500 transition-[width] duration-200 ease-out"
-        style={{ width: `${percent}%` }}
-      />
-      {/* Milestone tick marks */}
-      {MILESTONES.map((m) => (
-        <span
-          key={m.at}
-          aria-hidden
-          className={cn(
-            "absolute top-1/2 h-2 w-px -translate-y-1/2 bg-foreground/30",
-            charCount >= m.at && "bg-orange-500/80",
-          )}
-          style={{ left: `${(m.at / MAX_BAR) * 100}%` }}
-          title={`${m.at}자`}
-        />
-      ))}
-    </div>
-  );
 }
 
-function milestoneKey(today: string, at: number): string {
-  return `wn:milestone:${today}:${at}`;
+/**
+ * Inline percent label for the editor's bottom-right corner.
+ * Shows `0%` … `100%` against the 500-character ceiling. At 100% the
+ * label switches to bold + foreground color to reward completion.
+ * Side-effect: fires the writing milestone hook (toast + haptic) just
+ * like the legacy progress bar used to.
+ */
+export function WritingProgressBar({
+  charCount,
+  onMilestone,
+  className,
+}: {
+  charCount: number;
+  onMilestone?: (label: string) => void;
+  className?: string;
+}) {
+  useWritingMilestones(charCount, onMilestone);
+  const percent = Math.min(100, Math.floor((charCount / MAX_BAR) * 100));
+  const isFull = percent >= 100;
+  return (
+    <span
+      className={cn(
+        "tabular-nums",
+        isFull
+          ? "font-bold text-foreground"
+          : "text-muted-foreground",
+        className,
+      )}
+      data-testid="writing-progress"
+      data-percent={percent}
+      data-full={isFull ? "true" : "false"}
+      title={`${charCount}/${MAX_BAR}자`}
+      aria-label={`오늘의 글쓰기 진행 ${percent}%`}
+    >
+      {percent}%
+    </span>
+  );
 }
