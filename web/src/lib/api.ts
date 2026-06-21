@@ -32,6 +32,8 @@ export interface ApiUser {
   streakFreezes: number;
   /** Last KST day (YYYY-MM-DD) that contributed to the streak, or null. */
   streakLastDay: string | null;
+  /** ISO timestamp of the last 필명(display_name) change. Null if never renamed. */
+  displayNameChangedAt: string | null;
 }
 
 export interface ApiError extends Error {
@@ -281,6 +283,11 @@ export const api = {
       available: boolean;
       reason?: "required" | "too_short" | "too_long" | "invalid_chars" | "taken";
     }>("/auth/check-display-name", { query: { name }, auth: false }),
+  renameDisplayName: (displayName: string) =>
+    request<{ user: ApiUser }>("/users/me/display-name", {
+      method: "PATCH",
+      body: { displayName },
+    }),
   login: (body: { email: string; password: string }) =>
     request<{ user: ApiUser; tokens: Tokens }>("/auth/login", {
       method: "POST",

@@ -52,7 +52,7 @@ export default function AdminDashboard() {
             <thead>
               <tr className="text-left text-muted-foreground">
                 <th className="px-4 py-3 font-medium">이메일</th>
-                <th className="px-4 py-3 font-medium">이름</th>
+                <th className="px-4 py-3 font-medium">필명</th>
                 <th className="px-4 py-3 font-medium">크래딧</th>
                 <th className="px-4 py-3 font-medium">역할</th>
                 <th className="px-4 py-3" />

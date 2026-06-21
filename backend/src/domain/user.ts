@@ -19,6 +19,8 @@ export interface User {
   streakFreezes: number;
   /** KST date string of the most recent day counted toward the streak. */
   streakLastDay: string | null;
+  /** ISO timestamp of the last 필명(display_name) change, or null if never renamed. */
+  displayNameChangedAt: string | null;
 }
 
 export type SocialProvider = "email" | "google" | "apple";

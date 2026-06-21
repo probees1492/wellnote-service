@@ -8,6 +8,7 @@ import { activityRoutes } from "./routes/activity";
 import { adminRoutes } from "./routes/admin";
 import { streakRoutes } from "./routes/streak";
 import { pinRoutes } from "./routes/pins";
+import { userRoutes } from "./routes/users";
 import { scheduled as dailyReadonlyScheduled } from "./cron/daily-readonly";
 import { onError } from "./lib/error-handler";
 
@@ -50,6 +51,7 @@ app.route("/activity", activityRoutes);
 app.route("/admin", adminRoutes);
 app.route("/streak", streakRoutes);
 app.route("/pins", pinRoutes);
+app.route("/users", userRoutes);
 
 export default {
   fetch: app.fetch,

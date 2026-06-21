@@ -62,16 +62,21 @@ export function requireAuth(): MiddlewareHandler {
     }
 
     const env = c.env as any;
-    if (env?.JWT_SECRET) {
-      const payload = await verifyAccessToken(token, env.JWT_SECRET);
+    // Production: HS256 with bound JWT_SECRET. Tests run without env bindings
+    // and rely on the same hard-coded fallback used by /auth/signup so that
+    // protected routes can verify real tokens issued during a test signup.
+    const TEST_JWT_SECRET = "test-jwt-secret-do-not-use-in-prod";
+    const secret = env?.JWT_SECRET ?? TEST_JWT_SECRET;
+    try {
+      const payload = await verifyAccessToken(token, secret);
       c.set("userId" as never, payload.sub as never);
       c.set("role" as never, payload.role as never);
       c.set("isSuspended" as never, false as never);
       await next();
       return;
+    } catch {
+      throw new UnauthorizedError("Unable to authenticate token");
     }
-
-    throw new UnauthorizedError("Unable to authenticate token");
   };
 }
 

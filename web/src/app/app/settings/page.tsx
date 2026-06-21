@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { RenameDisplayNameDialog } from "@/components/profile/RenameDisplayNameDialog";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
@@ -11,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { api, type CreditTx } from "@/lib/api";
+import { api, type ApiUser, type CreditTx } from "@/lib/api";
 import { useAuth } from "@/lib/auth-store";
 import {
   DEFAULT_PREFS,
@@ -26,6 +28,8 @@ const REMINDER_KEY = "wn:reminderOptIn";
 
 export default function SettingsPage() {
   const user = useAuth((s) => s.user);
+  const refreshMe = useAuth((s) => s.refreshMe);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
   const [txs, setTxs] = useState<CreditTx[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -106,9 +110,23 @@ export default function SettingsPage() {
     };
   }, []);
 
+  function handleRenamed(_next: ApiUser) {
+    // The dialog already mutated the API response; refresh /auth/me so the
+    // shared zustand store reflects the new name everywhere (Header, etc.).
+    void refreshMe();
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">설정</h1>
+      {user ? (
+        <RenameDisplayNameDialog
+          open={renameOpen}
+          onOpenChange={setRenameOpen}
+          user={user}
+          onRenamed={handleRenamed}
+        />
+      ) : null}
       <Card>
         <CardHeader>
           <CardTitle>프로필</CardTitle>
@@ -118,9 +136,21 @@ export default function SettingsPage() {
             <span className="text-muted-foreground">이메일</span>
             <span>{user?.email}</span>
           </div>
-          <div className="flex justify-between py-1">
-            <span className="text-muted-foreground">표시 이름</span>
-            <span>{user?.displayName}</span>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-muted-foreground">필명</span>
+            <div className="flex items-center gap-2">
+              <span>{user?.displayName}</span>
+              {user ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRenameOpen(true)}
+                  data-testid="rename-displayname-button"
+                >
+                  변경
+                </Button>
+              ) : null}
+            </div>
           </div>
           <div className="flex justify-between py-1">
             <span className="text-muted-foreground">역할</span>

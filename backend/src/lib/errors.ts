@@ -92,8 +92,8 @@ export class AccountSuspendedError extends DomainError {
 }
 
 export class RateLimitedError extends DomainError {
-  constructor(message = "Rate limited") {
-    super("RATE_LIMITED", message, 429);
+  constructor(message = "Rate limited", details?: unknown) {
+    super("RATE_LIMITED", message, 429, details);
   }
 }
 

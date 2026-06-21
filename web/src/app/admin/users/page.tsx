@@ -110,7 +110,7 @@ function AdminUserDetailInner() {
             <span>{user.email || "—"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">이름</span>
+            <span className="text-muted-foreground">필명</span>
             <span>{user.displayName || "—"}</span>
           </div>
           <div className="flex justify-between">

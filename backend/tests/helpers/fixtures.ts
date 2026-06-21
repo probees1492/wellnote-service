@@ -22,6 +22,7 @@ export function makeUser(overrides: Partial<User> = {}): User {
     streakLongest: 0,
     streakFreezes: 1,
     streakLastDay: null,
+    displayNameChangedAt: null,
     ...overrides,
   };
 }

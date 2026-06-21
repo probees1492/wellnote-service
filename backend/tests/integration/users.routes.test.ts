@@ -1,0 +1,177 @@
+import { describe, it, expect } from "vitest";
+import { Hono } from "hono";
+import { authRoutes, memUsers, memUsersByEmail } from "../../src/routes/auth";
+import { userRoutes } from "../../src/routes/users";
+
+function mkApp() {
+  const app = new Hono();
+  app.route("/auth", authRoutes);
+  app.route("/users", userRoutes);
+  return app;
+}
+
+async function signup(
+  app: Hono,
+  email: string,
+  displayName: string,
+): Promise<{ token: string; userId: string }> {
+  const res = await app.request("/auth/signup", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email,
+      password: "Secret123!",
+      displayName,
+    }),
+  });
+  expect(res.status).toBe(200);
+  const body = (await res.json()) as any;
+  return {
+    token: body.tokens.accessToken as string,
+    userId: body.user.id as string,
+  };
+}
+
+function rewindCooldown(userId: string, hoursAgo: number) {
+  const u = memUsers.get(userId);
+  if (!u) throw new Error("user not found");
+  if (!u.displayNameChangedAt) return;
+  u.displayNameChangedAt = new Date(
+    Date.parse(u.displayNameChangedAt) - hoursAgo * 60 * 60 * 1000,
+  ).toISOString();
+}
+
+describe("PATCH /users/me/display-name (필명 수정)", () => {
+  it("renames + stamps displayNameChangedAt", async () => {
+    const app = mkApp();
+    const { token, userId } = await signup(app, "rename1@x.com", "Origin");
+    const res = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ displayName: "Renamed" }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.user.displayName).toBe("Renamed");
+    expect(body.user.displayNameChangedAt).toBeTypeOf("string");
+    expect(memUsers.get(userId)?.displayName).toBe("Renamed");
+  });
+
+  it("rejects duplicate display name with 409", async () => {
+    const app = mkApp();
+    await signup(app, "owner@x.com", "TakenPen");
+    const { token } = await signup(app, "renamer@x.com", "MyName");
+    const res = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ displayName: "takenpen" }),
+    });
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as any;
+    expect(body.error?.code).toBe("CONFLICT");
+    expect(body.error?.details?.field).toBe("displayName");
+  });
+
+  it("enforces 24h cooldown after a rename", async () => {
+    const app = mkApp();
+    const { token } = await signup(app, "cooldown@x.com", "First");
+    const r1 = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ displayName: "Second" }),
+    });
+    expect(r1.status).toBe(200);
+    const r2 = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ displayName: "Third" }),
+    });
+    expect(r2.status).toBe(429);
+    const body = (await r2.json()) as any;
+    expect(body.error?.code).toBe("RATE_LIMITED");
+    expect(body.error?.details?.retryAt).toBeTypeOf("string");
+  });
+
+  it("allows rename after the cooldown expires", async () => {
+    const app = mkApp();
+    const { token, userId } = await signup(app, "cooled@x.com", "First2");
+    const r1 = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ displayName: "Second2" }),
+    });
+    expect(r1.status).toBe(200);
+    // Pretend the change happened > 24h ago.
+    rewindCooldown(userId, 25);
+    const r2 = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ displayName: "Third2" }),
+    });
+    expect(r2.status).toBe(200);
+  });
+
+  it("no-op when the requested name matches the current one (cooldown not consumed)", async () => {
+    const app = mkApp();
+    const { token, userId } = await signup(app, "noop@x.com", "Stable");
+    const res = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ displayName: "stable" }),
+    });
+    expect(res.status).toBe(200);
+    // The original signup did NOT stamp displayNameChangedAt (only renames do),
+    // so the field remains null and no cooldown is triggered.
+    expect(memUsers.get(userId)?.displayNameChangedAt).toBe(null);
+  });
+
+  it("rejects invalid characters with 400", async () => {
+    const app = mkApp();
+    const { token } = await signup(app, "invalid@x.com", "Init");
+    const res = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ displayName: "bad!name" }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as any;
+    expect(body.error?.details?.reason).toBe("invalid_chars");
+  });
+
+  it("requires auth", async () => {
+    const app = mkApp();
+    const res = await app.request("/users/me/display-name", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ displayName: "Anon" }),
+    });
+    expect(res.status).toBe(401);
+  });
+});
+
+// Silence unused-import lint when memUsersByEmail isn't referenced directly.
+void memUsersByEmail;

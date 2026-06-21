@@ -79,17 +79,18 @@ interface MemUser {
   streakLongest: number;
   streakFreezes: number;
   streakLastDay: string | null;
+  displayNameChangedAt: string | null;
 }
 
-const memUsers = new Map<string, MemUser>();
-const memUsersByEmail = new Map<string, MemUser>();
+export const memUsers = new Map<string, MemUser>();
+export const memUsersByEmail = new Map<string, MemUser>();
 const memRefreshTokens = new Map<string, { userId: string; expiresAt: number }>();
 
 function newUserId(): string {
   return `usr_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
 }
 
-function safeUser(u: {
+export function safeUser(u: {
   id: string;
   email: string;
   emailVerifiedAt: string | null;
@@ -103,6 +104,7 @@ function safeUser(u: {
   streakLongest?: number;
   streakFreezes?: number;
   streakLastDay?: string | null;
+  displayNameChangedAt?: string | null;
 }) {
   return {
     id: u.id,
@@ -118,6 +120,7 @@ function safeUser(u: {
     streakLongest: u.streakLongest ?? 0,
     streakFreezes: u.streakFreezes ?? 1,
     streakLastDay: u.streakLastDay ?? null,
+    displayNameChangedAt: u.displayNameChangedAt ?? null,
   };
 }
 
@@ -263,6 +266,7 @@ authRoutes.post("/signup", async (c) => {
     streakLongest: 0,
     streakFreezes: 1,
     streakLastDay: null,
+    displayNameChangedAt: null,
   };
   memUsers.set(user.id, user);
   memUsersByEmail.set(email, user);
@@ -675,6 +679,7 @@ async function upsertSocialUser(
       streakLongest: 0,
       streakFreezes: 1,
       streakLastDay: null,
+      displayNameChangedAt: null,
     };
     memUsers.set(user.id, user);
     memUsersByEmail.set(email, user);

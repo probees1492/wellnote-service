@@ -12,6 +12,8 @@ export interface CreateUserInput {
 
 export interface UpdateUserInput {
   displayName?: string;
+  /** When set together with `displayName`, stamps `display_name_changed_at`. */
+  stampDisplayNameChange?: boolean;
   emailVerifiedAt?: string | null;
   passwordHash?: string | null;
   role?: UserRole;
@@ -70,6 +72,7 @@ interface UserRow {
   streak_longest?: number | null;
   streak_freezes?: number | null;
   streak_last_day?: string | null;
+  display_name_changed_at?: string | null;
 }
 
 interface SocialRow {
@@ -96,6 +99,7 @@ function mapUser(row: UserRow): User {
     streakLongest: row.streak_longest ?? 0,
     streakFreezes: row.streak_freezes ?? 1,
     streakLastDay: row.streak_last_day ?? null,
+    displayNameChangedAt: row.display_name_changed_at ?? null,
   };
 }
 
@@ -196,6 +200,10 @@ export class D1UserRepo implements UserRepo {
     if (patch.displayName !== undefined) {
       sets.push("display_name = ?");
       values.push(patch.displayName);
+      if (patch.stampDisplayNameChange) {
+        sets.push("display_name_changed_at = ?");
+        values.push(new Date().toISOString());
+      }
     }
     if (patch.emailVerifiedAt !== undefined) {
       sets.push("email_verified_at = ?");
@@ -222,10 +230,26 @@ export class D1UserRepo implements UserRepo {
     sets.push("updated_at = ?");
     values.push(now);
     values.push(id);
-    const res = await this.db
-      .prepare(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`)
-      .bind(...values)
-      .run();
+    let res;
+    try {
+      res = await this.db
+        .prepare(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`)
+        .bind(...values)
+        .run();
+    } catch (e) {
+      if (isUniqueConstraintError(e)) {
+        const target = uniqueErrorTarget(e);
+        if (target === "display_name") {
+          throw new ConflictError("Display name already in use", {
+            field: "displayName",
+          });
+        }
+        throw new ConflictError("Unique constraint violated", {
+          field: target,
+        });
+      }
+      throw e;
+    }
     if (!res.meta?.changes) throw new NotFoundError("User");
     const row = await this.db
       .prepare(`SELECT * FROM users WHERE id = ?`)
