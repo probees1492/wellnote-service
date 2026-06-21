@@ -2,6 +2,7 @@ import type { Env } from "../env";
 import { generateDailyPromptPool } from "../services/prompt-generation.service";
 import { toDateKst } from "../lib/time";
 import type { DailyPrompt } from "../domain/prompt-topic";
+import { runUsageSnapshot } from "./usage-snapshot";
 
 const KV_PREFIX = "prompt-pool:";
 const KV_TTL_SEC = 60 * 60 * 24 * 14; // keep 2 weeks of history for debugging
@@ -81,6 +82,20 @@ export async function scheduled(
   env: Env,
   _ctx: ExecutionContext,
 ): Promise<void> {
-  const r = await runDailyPrompts(env);
-  console.log("[cron] daily-prompts", JSON.stringify(r));
+  // Cloudflare's free plan caps the *account* at 5 cron triggers total, so
+  // we piggyback the daily Cloudflare usage snapshot onto this 04:00 KST
+  // run instead of registering a third cron string.
+  const promptResult = await runDailyPrompts(env);
+  console.log("[cron] daily-prompts", JSON.stringify(promptResult));
+  try {
+    const usage = await runUsageSnapshot(env);
+    console.log(
+      "[cron] usage-snapshot (piggybacked)",
+      usage
+        ? JSON.stringify({ generatedAt: usage.generatedAt, ok: true })
+        : "skipped",
+    );
+  } catch (e) {
+    console.warn("[cron] usage-snapshot failed:", e);
+  }
 }

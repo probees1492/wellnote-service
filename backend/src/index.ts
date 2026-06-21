@@ -14,7 +14,6 @@ import { buddyRoutes } from "./routes/buddies";
 import { interactionRoutes } from "./routes/interactions";
 import { scheduled as dailyReadonlyScheduled } from "./cron/daily-readonly";
 import { scheduled as dailyPromptsScheduled } from "./cron/daily-prompts";
-import { scheduled as usageSnapshotScheduled } from "./cron/usage-snapshot";
 import { onError } from "./lib/error-handler";
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -65,8 +64,10 @@ app.route("/", interactionRoutes);
 
 /** Dispatch the scheduled handler based on which cron fired.
  *  - "0 15 * * *" (15:00 UTC / 00:00 KST) → daily-readonly sweep
- *  - "0 17 * * *" (17:00 UTC / 02:00 KST) → Cloudflare usage snapshot
  *  - "0 19 * * *" (19:00 UTC / 04:00 KST) → daily prompt-pool generation
+ *                                          + Cloudflare usage snapshot
+ *                                          (piggybacked to stay under the
+ *                                          5-cron account limit on free plan)
  *  Falls back to daily-readonly if the cron string is unknown so we never
  *  silently drop a scheduled run.
  */
@@ -76,9 +77,6 @@ const scheduled: ExportedHandlerScheduledHandler<Env> = (
   ctx,
 ) => {
   const cron = controller?.cron ?? "";
-  if (cron === "0 17 * * *") {
-    return usageSnapshotScheduled(controller, env, ctx);
-  }
   if (cron === "0 19 * * *") {
     return dailyPromptsScheduled(controller, env, ctx);
   }
