@@ -8,11 +8,11 @@ import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 
 export const metadata: Metadata = {
   title: {
-    default: "WellNote — We will note!",
-    template: "%s · WellNote",
+    default: "WellNote (beta) — We will note!",
+    template: "%s · WellNote (beta)",
   },
   description: "We will note! — 매일 한 페이지, 봉인되는 일기.",
-  applicationName: "WellNote",
+  applicationName: "WellNote (beta)",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
   },
   openGraph: {
-    title: "WellNote — We will note!",
+    title: "WellNote (beta) — We will note!",
     description: "매일 한 페이지, 봉인되는 일기.",
     siteName: "WellNote",
     type: "website",
