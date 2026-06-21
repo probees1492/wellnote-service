@@ -189,7 +189,7 @@ export function ActivityGrid({
                         "ring-2 ring-ring ring-offset-1 ring-offset-background",
                       !isToday &&
                         isInStreak &&
-                        "ring-1 ring-orange-400/60 ring-offset-0",
+                        "ring-1 ring-primary/40 ring-offset-0",
                       !isPlaceholder &&
                         !isToday &&
                         "hover:outline hover:outline-1 hover:outline-ring",

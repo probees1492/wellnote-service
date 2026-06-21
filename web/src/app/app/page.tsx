@@ -117,7 +117,7 @@ export default function HomePage() {
             data-testid="streak-banner"
           >
             {streak.current > 0 ? (
-              <span className="text-orange-500">
+              <span className="text-foreground">
                 <span aria-hidden>🔥</span>{" "}
                 <span className="font-semibold">{streak.current}일</span> 연속!
               </span>

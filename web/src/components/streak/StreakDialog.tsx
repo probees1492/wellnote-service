@@ -62,7 +62,7 @@ export function StreakDialog({
             <span
               className={cn(
                 "tabular-nums",
-                current > 0 ? "text-orange-500" : "text-muted-foreground",
+                current > 0 ? "text-foreground" : "text-muted-foreground",
               )}
               data-testid="streak-dialog-current"
             >
@@ -101,7 +101,7 @@ export function StreakDialog({
               data-testid="streak-progress"
             >
               <div
-                className="h-full rounded-full bg-orange-500 transition-all"
+                className="h-full rounded-full bg-primary transition-all"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -141,7 +141,7 @@ export function StreakDialog({
                     {achieved ? (
                       <span
                         aria-label="달성"
-                        className="text-orange-500"
+                        className="text-foreground"
                       >
                         ✓
                       </span>

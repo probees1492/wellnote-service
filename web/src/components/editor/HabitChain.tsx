@@ -59,7 +59,7 @@ export function HabitChain({
       className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 text-sm", className)}
       data-testid="habit-chain"
     >
-      <span className="inline-flex items-center gap-1 font-semibold text-orange-500">
+      <span className="inline-flex items-center gap-1 font-semibold text-foreground">
         <Flame className="h-4 w-4" weight="duotone" aria-hidden />
         {streak.current}일
       </span>
@@ -82,7 +82,7 @@ export function HabitChain({
       <span className="text-muted-foreground">—</span>
       <span className="text-foreground">오늘은?</span>
       {isLateKst ? (
-        <span className="ml-1 text-xs font-medium text-orange-500">(자정 전!)</span>
+        <span className="ml-1 text-xs font-medium text-foreground underline decoration-foreground/60">(자정 전!)</span>
       ) : null}
     </div>
   );

@@ -66,7 +66,7 @@ export function StreakBadge({ status: statusProp }: StreakBadgeProps) {
         data-current={current}
         className={cn(
           "inline-flex h-9 items-center gap-1 rounded-md px-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          isActive ? "text-orange-500" : "text-muted-foreground",
+          isActive ? "text-foreground" : "text-muted-foreground",
         )}
       >
         <span aria-hidden className="text-base leading-none">

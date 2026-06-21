@@ -95,7 +95,7 @@ export function MilestoneCelebration({ status }: MilestoneCelebrationProps) {
         data-testid="milestone-dialog"
       >
         <DialogHeader>
-          <DialogTitle className="text-center text-3xl text-orange-500">
+          <DialogTitle className="text-center text-3xl text-foreground">
             <span aria-hidden>🔥</span> {reachedDay}일
           </DialogTitle>
           <DialogDescription className="text-center text-base">

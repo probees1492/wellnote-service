@@ -233,7 +233,7 @@ export default function TodayPage() {
       ) : null}
       {milestoneToast ? (
         <div
-          className="rounded-md border border-orange-400/40 bg-orange-50 px-3 py-2 text-sm text-orange-700 dark:bg-orange-950/40 dark:text-orange-300"
+          className="rounded-md border bg-secondary px-3 py-2 text-sm text-secondary-foreground"
           data-testid="milestone-toast"
         >
           {milestoneToast}
