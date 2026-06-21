@@ -19,7 +19,7 @@ interface AuthState {
   signup: (
     email: string,
     password: string,
-    displayName?: string,
+    displayName: string,
     opts?: LoginOpts,
   ) => Promise<void>;
   loginWithGoogle: (idToken: string, opts?: LoginOpts) => Promise<void>;
@@ -80,3 +80,49 @@ export const useAuth = create<AuthState>((set) => ({
     }
   },
 }));
+
+// ---------------------------------------------------------------------------
+// 필명 (display name) — client-side policy mirrors backend/src/domain/display-name.ts.
+// Keep both in sync; the server is still the source of truth.
+// ---------------------------------------------------------------------------
+
+export const DISPLAY_NAME_MIN = 2;
+export const DISPLAY_NAME_MAX = 20;
+const DISPLAY_NAME_ALLOWED = /^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9 _\-.]+$/u;
+const DISPLAY_NAME_HAS_ALPHANUM = /[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]/u;
+
+export type DisplayNameReason =
+  | "required"
+  | "too_short"
+  | "too_long"
+  | "invalid_chars"
+  | "taken";
+
+export type DisplayNameValidation =
+  | { ok: true; value: string }
+  | { ok: false; reason: Exclude<DisplayNameReason, "taken"> };
+
+export function validateDisplayNameClient(raw: string): DisplayNameValidation {
+  const v = raw.trim();
+  if (v.length === 0) return { ok: false, reason: "required" };
+  if (v.length < DISPLAY_NAME_MIN) return { ok: false, reason: "too_short" };
+  if (v.length > DISPLAY_NAME_MAX) return { ok: false, reason: "too_long" };
+  if (!DISPLAY_NAME_ALLOWED.test(v)) return { ok: false, reason: "invalid_chars" };
+  if (!DISPLAY_NAME_HAS_ALPHANUM.test(v)) return { ok: false, reason: "invalid_chars" };
+  return { ok: true, value: v };
+}
+
+export function displayNameReasonLabel(reason: DisplayNameReason): string {
+  switch (reason) {
+    case "required":
+      return "필명을 입력해주세요.";
+    case "too_short":
+      return `필명은 ${DISPLAY_NAME_MIN}자 이상이어야 합니다.`;
+    case "too_long":
+      return `필명은 ${DISPLAY_NAME_MAX}자 이하여야 합니다.`;
+    case "invalid_chars":
+      return "한글·영문·숫자·공백·_-. 만 사용할 수 있습니다.";
+    case "taken":
+      return "이미 사용 중인 필명입니다.";
+  }
+}

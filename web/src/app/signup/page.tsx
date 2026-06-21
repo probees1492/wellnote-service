@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { LogoWordmark } from "@/components/brand/Logo";
@@ -17,7 +17,21 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/auth-store";
+import { api } from "@/lib/api";
+import {
+  DISPLAY_NAME_MAX,
+  DISPLAY_NAME_MIN,
+  type DisplayNameReason,
+  displayNameReasonLabel,
+  useAuth,
+  validateDisplayNameClient,
+} from "@/lib/auth-store";
+
+type CheckState =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "available"; value: string }
+  | { status: "unavailable"; reason: DisplayNameReason };
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,6 +43,48 @@ export default function SignupPage() {
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [check, setCheck] = useState<CheckState>({ status: "idle" });
+  const debounceRef = useRef<number | null>(null);
+
+  const emailLocalPart = useMemo(() => {
+    const at = email.indexOf("@");
+    return at > 0 ? email.slice(0, at) : email;
+  }, [email]);
+  const displayNamePlaceholder = emailLocalPart || "예: 한필명";
+
+  useEffect(() => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    const trimmed = displayName.trim();
+    if (!trimmed) {
+      setCheck({ status: "idle" });
+      return;
+    }
+    const local = validateDisplayNameClient(trimmed);
+    if (!local.ok) {
+      setCheck({ status: "unavailable", reason: local.reason });
+      return;
+    }
+    setCheck({ status: "checking" });
+    debounceRef.current = window.setTimeout(async () => {
+      try {
+        const r = await api.checkDisplayName(local.value);
+        if (r.available) {
+          setCheck({ status: "available", value: local.value });
+        } else {
+          setCheck({
+            status: "unavailable",
+            reason: r.reason ?? "taken",
+          });
+        }
+      } catch {
+        // Network errors don't block submit — server-side check is authoritative.
+        setCheck({ status: "idle" });
+      }
+    }, 350);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [displayName]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,9 +97,18 @@ export default function SignupPage() {
       setError("비밀번호 확인이 일치하지 않습니다.");
       return;
     }
+    const local = validateDisplayNameClient(displayName);
+    if (!local.ok) {
+      setError(displayNameReasonLabel(local.reason));
+      return;
+    }
+    if (check.status === "unavailable") {
+      setError(displayNameReasonLabel(check.reason));
+      return;
+    }
     setLoading(true);
     try {
-      await signup(email, password, displayName || undefined, { remember });
+      await signup(email, password, local.value, { remember });
       router.push("/app");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "가입에 실패했습니다.";
@@ -52,6 +117,12 @@ export default function SignupPage() {
       setLoading(false);
     }
   }
+
+  const submitDisabled =
+    loading ||
+    check.status === "checking" ||
+    check.status === "unavailable" ||
+    displayName.trim().length === 0;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-6 py-16">
@@ -107,13 +178,19 @@ export default function SignupPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="displayName">표시 이름 (선택)</Label>
+                <Label htmlFor="displayName">필명</Label>
                 <Input
                   id="displayName"
+                  required
+                  minLength={DISPLAY_NAME_MIN}
+                  maxLength={DISPLAY_NAME_MAX}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder={displayNamePlaceholder}
+                  aria-describedby="displayName-help"
                   data-testid="signup-displayname"
                 />
+                <DisplayNameHelp id="displayName-help" state={check} />
               </div>
 
               <label
@@ -140,7 +217,7 @@ export default function SignupPage() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={loading}
+                disabled={submitDisabled}
                 data-testid="signup-submit"
               >
                 {loading ? "가입 중..." : "가입하기"}
@@ -174,5 +251,56 @@ export default function SignupPage() {
         </Card>
       </div>
     </main>
+  );
+}
+
+function DisplayNameHelp({
+  id,
+  state,
+}: {
+  id: string;
+  state: CheckState;
+}) {
+  if (state.status === "idle") {
+    return (
+      <span id={id} className="text-xs text-muted-foreground">
+        2–20자, 한글·영문·숫자·공백·_-. 만 사용
+      </span>
+    );
+  }
+  if (state.status === "checking") {
+    return (
+      <span
+        id={id}
+        className="text-xs text-muted-foreground"
+        data-testid="displayname-check"
+        data-state="checking"
+      >
+        확인 중...
+      </span>
+    );
+  }
+  if (state.status === "available") {
+    return (
+      <span
+        id={id}
+        className="text-xs text-emerald-600 dark:text-emerald-400"
+        data-testid="displayname-check"
+        data-state="available"
+      >
+        사용 가능한 필명입니다.
+      </span>
+    );
+  }
+  return (
+    <span
+      id={id}
+      className="text-xs text-destructive"
+      data-testid="displayname-check"
+      data-state="unavailable"
+      data-reason={state.reason}
+    >
+      {displayNameReasonLabel(state.reason)}
+    </span>
   );
 }

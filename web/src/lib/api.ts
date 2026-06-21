@@ -270,12 +270,17 @@ export async function request<T = unknown>(
 
 export const api = {
   base: API_BASE,
-  signup: (body: { email: string; password: string; displayName?: string }) =>
+  signup: (body: { email: string; password: string; displayName: string }) =>
     request<{ user: ApiUser; tokens: Tokens }>("/auth/signup", {
       method: "POST",
       body,
       auth: false,
     }),
+  checkDisplayName: (name: string) =>
+    request<{
+      available: boolean;
+      reason?: "required" | "too_short" | "too_long" | "invalid_chars" | "taken";
+    }>("/auth/check-display-name", { query: { name }, auth: false }),
   login: (body: { email: string; password: string }) =>
     request<{ user: ApiUser; tokens: Tokens }>("/auth/login", {
       method: "POST",
