@@ -210,42 +210,6 @@ buddyRoutes.put("/me/visibility", requireAuth(), async (c) => {
   return c.json({ followingVisibility: parsed.data.followingVisibility });
 });
 
-/** GET /buddies/:userId — public profile snapshot. (Keep this AFTER the static
- *  /me/* routes so Hono's matcher doesn't capture them.) */
-buddyRoutes.get("/:userId", requireAuth(), async (c) => {
-  const viewerId = c.get("userId") as string;
-  const target = c.req.param("userId");
-  const r = repos(c.env);
-  const targetUser =
-    r.mode === "d1" ? await r.users.findById(target) : memUser(target);
-  if (!targetUser) throw new NotFoundError("User");
-  const profile = await toProfile(targetUser, viewerId, r.buddies);
-  return c.json({ buddy: profile });
-});
-
-/**
- * GET /buddies/:userId/following — that user's following list. 403 when the
- * user has hidden their list and the viewer isn't them.
- */
-buddyRoutes.get("/:userId/following", requireAuth(), async (c) => {
-  const viewerId = c.get("userId") as string;
-  const target = c.req.param("userId");
-  const cursor = c.req.query("cursor") ?? undefined;
-  const r = repos(c.env);
-  const targetUser =
-    r.mode === "d1" ? await r.users.findById(target) : memUser(target);
-  if (!targetUser) throw new NotFoundError("User");
-  if (
-    targetUser.followingVisibility === "private" &&
-    targetUser.id !== viewerId
-  ) {
-    throw new ForbiddenError("Following list is private");
-  }
-  const page = await r.buddies.listFollowing(target, { cursor });
-  const items = await hydrateProfiles(page.items, viewerId, r);
-  return c.json({ items, nextCursor: page.nextCursor });
-});
-
 interface FeedItem {
   memoId: string;
   ownerId: string;
@@ -280,6 +244,9 @@ interface FeedRow {
  * GET /buddies/feed — paginated metadata of public-pin memos from users the
  * viewer follows. Most-recently-updated first. Body is fetched separately
  * via /buddies/memos/:memoId.
+ *
+ * NOTE: must be registered BEFORE the catch-all /:userId route below, or
+ * Hono's matcher will treat "feed" as a user id.
  */
 buddyRoutes.get("/feed", requireAuth(), async (c) => {
   const viewerId = c.get("userId") as string;
@@ -353,6 +320,8 @@ buddyRoutes.get("/feed", requireAuth(), async (c) => {
  * GET /buddies/memos/:memoId — full body of a memo IF it sits in a public
  * pin. Reachable by any authenticated user; the public-pin attribution acts
  * as the access-control flag (spec: "공개된 핀 글").
+ *
+ * Registered BEFORE /:userId for the same matcher-precedence reason as /feed.
  */
 buddyRoutes.get("/memos/:memoId", requireAuth(), async (c) => {
   const memoId = c.req.param("memoId");
@@ -392,6 +361,42 @@ buddyRoutes.get("/memos/:memoId", requireAuth(), async (c) => {
           }
         : null,
   });
+});
+
+/** GET /buddies/:userId — public profile snapshot. (Keep this AFTER the static
+ *  /me/* + /feed + /memos/* routes so Hono's matcher doesn't capture them.) */
+buddyRoutes.get("/:userId", requireAuth(), async (c) => {
+  const viewerId = c.get("userId") as string;
+  const target = c.req.param("userId");
+  const r = repos(c.env);
+  const targetUser =
+    r.mode === "d1" ? await r.users.findById(target) : memUser(target);
+  if (!targetUser) throw new NotFoundError("User");
+  const profile = await toProfile(targetUser, viewerId, r.buddies);
+  return c.json({ buddy: profile });
+});
+
+/**
+ * GET /buddies/:userId/following — that user's following list. 403 when the
+ * user has hidden their list and the viewer isn't them.
+ */
+buddyRoutes.get("/:userId/following", requireAuth(), async (c) => {
+  const viewerId = c.get("userId") as string;
+  const target = c.req.param("userId");
+  const cursor = c.req.query("cursor") ?? undefined;
+  const r = repos(c.env);
+  const targetUser =
+    r.mode === "d1" ? await r.users.findById(target) : memUser(target);
+  if (!targetUser) throw new NotFoundError("User");
+  if (
+    targetUser.followingVisibility === "private" &&
+    targetUser.id !== viewerId
+  ) {
+    throw new ForbiddenError("Following list is private");
+  }
+  const page = await r.buddies.listFollowing(target, { cursor });
+  const items = await hydrateProfiles(page.items, viewerId, r);
+  return c.json({ items, nextCursor: page.nextCursor });
 });
 
 async function hydrateProfiles(

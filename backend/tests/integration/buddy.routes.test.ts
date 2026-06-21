@@ -150,6 +150,36 @@ describe("buddy routes — search + follow + visibility", () => {
     ]);
   });
 
+  it("GET /buddies/feed returns 200 (not captured by /:userId)", async () => {
+    // Regression: an earlier registration order made `feed` match `/:userId`
+    // and the route returned NotFoundError("User"), surfacing as
+    // "User not found" in the UI feed tab.
+    const app = appCache;
+    const a = await signup(app, "feed@x.com", "Feeder");
+    const res = await app.request("/buddies/feed", {
+      headers: { authorization: `Bearer ${a.token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(Array.isArray(body.items)).toBe(true);
+    expect(body.nextCursor).toBeNull();
+  });
+
+  it("GET /buddies/memos/:memoId is not captured by /:userId", async () => {
+    const app = appCache;
+    const a = await signup(app, "buddymemo@x.com", "BuddyMemo");
+    // Memo lookup requires D1 — without it the route returns NotFound("Memo")
+    // / NotFound("Database"), NOT "User" (which would be the symptom of the
+    // earlier ordering bug).
+    const res = await app.request("/buddies/memos/some-memo-id", {
+      headers: { authorization: `Bearer ${a.token}` },
+    });
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as any;
+    // Confirms we hit the memo handler, not the userId handler.
+    expect(body.error?.message).not.toContain("User");
+  });
+
   it("public-following-list flow: A → B → A reads C through B", async () => {
     const app = appCache;
     const a = await signup(app, "a@x.com", "Reader");
