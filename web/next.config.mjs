@@ -24,6 +24,8 @@ const nextConfig = {
             { source: "/streak/:path*", destination: `${API_TARGET}/streak/:path*` },
             { source: "/admin/:path*", destination: `${API_TARGET}/admin/:path*` },
             { source: "/users/:path*", destination: `${API_TARGET}/users/:path*` },
+            { source: "/buddies/:path*", destination: `${API_TARGET}/buddies/:path*` },
+            { source: "/prompts/:path*", destination: `${API_TARGET}/prompts/:path*` },
           ];
         },
       }),

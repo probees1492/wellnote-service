@@ -11,6 +11,7 @@ import {
   Gear,
   Shield,
   PushPin,
+  Users,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { cn } from "@/lib/utils";
@@ -41,6 +42,12 @@ const APP_ITEMS: NavItem[] = [
     label: "핀",
     icon: PushPin,
     match: (p) => !!p?.startsWith("/app/pins"),
+  },
+  {
+    href: "/app/buddies",
+    label: "버디",
+    icon: Users,
+    match: (p) => !!p?.startsWith("/app/buddies"),
   },
   {
     href: "/app/search",

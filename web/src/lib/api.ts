@@ -38,6 +38,12 @@ export interface ApiUser {
   avatarUpdatedAt: string | null;
   /** Cache-busted server-relative avatar URL (null until first upload). */
   avatarUrl: string | null;
+  /** Buddy graph: how many people follow me. */
+  followerCount: number;
+  /** Buddy graph: how many people I follow. */
+  followingCount: number;
+  /** Whether my following list is visible to other users. */
+  followingVisibility: "public" | "private";
 }
 
 /** Convenience: build an absolute avatar URL for an `<img>` element. */
@@ -430,6 +436,86 @@ export const api = {
         body: { pinId },
       }),
   },
+  buddies: {
+    search: (q: string) =>
+      request<{ items: BuddyProfile[] }>(`/buddies/search`, { query: { q } }),
+    follow: (userId: string) =>
+      request<{ buddy: BuddyProfile }>(`/buddies/follow/${userId}`, {
+        method: "POST",
+      }),
+    unfollow: (userId: string) =>
+      request<{ buddy: BuddyProfile }>(`/buddies/follow/${userId}`, {
+        method: "DELETE",
+      }),
+    listMyFollowing: (cursor?: string) =>
+      request<{ items: BuddyProfile[]; nextCursor: string | null }>(
+        `/buddies/me/following`,
+        { query: { cursor } },
+      ),
+    listMyFollowers: (cursor?: string) =>
+      request<{ items: BuddyProfile[]; nextCursor: string | null }>(
+        `/buddies/me/followers`,
+        { query: { cursor } },
+      ),
+    get: (userId: string) =>
+      request<{ buddy: BuddyProfile }>(`/buddies/${userId}`),
+    listFollowing: (userId: string, cursor?: string) =>
+      request<{ items: BuddyProfile[]; nextCursor: string | null }>(
+        `/buddies/${userId}/following`,
+        { query: { cursor } },
+      ),
+    setVisibility: (value: "public" | "private") =>
+      request<{ followingVisibility: "public" | "private" }>(
+        `/buddies/me/visibility`,
+        { method: "PUT", body: { followingVisibility: value } },
+      ),
+    feed: (cursor?: string, limit?: number) =>
+      request<{ items: FeedItem[]; nextCursor: string | null }>(
+        `/buddies/feed`,
+        { query: { cursor, limit } },
+      ),
+    memo: (memoId: string) =>
+      request<{
+        memo: MemoWithBody;
+        owner: { id: string };
+        pin: {
+          id: string;
+          name: string;
+          color: string;
+          visibility: "public" | "private";
+        } | null;
+      }>(`/buddies/memos/${memoId}`),
+  },
+  reactions: {
+    list: (memoId: string) =>
+      request<{ tally: ReactionTally[] }>(`/memos/${memoId}/reactions`),
+    add: (memoId: string, emoji: string) =>
+      request<{ tally: ReactionTally[] }>(`/memos/${memoId}/reactions`, {
+        method: "POST",
+        body: { emoji },
+      }),
+    remove: (memoId: string, emoji: string) =>
+      request<{ tally: ReactionTally[] }>(`/memos/${memoId}/reactions`, {
+        method: "DELETE",
+        query: { emoji },
+      }),
+  },
+  comments: {
+    list: (memoId: string, cursor?: string) =>
+      request<{ items: BuddyComment[]; nextCursor: string | null }>(
+        `/memos/${memoId}/comments`,
+        { query: { cursor } },
+      ),
+    create: (memoId: string, body: string) =>
+      request<{ comment: BuddyComment }>(`/memos/${memoId}/comments`, {
+        method: "POST",
+        body: { body },
+      }),
+    delete: (memoId: string, commentId: string) =>
+      request<{ ok: true }>(`/memos/${memoId}/comments/${commentId}`, {
+        method: "DELETE",
+      }),
+  },
 };
 
 // ---------- Types mirrored from backend domain ----------
@@ -513,4 +599,57 @@ export interface AdminUserRow {
   role?: "user" | "admin" | "superadmin";
   isSuspended?: boolean;
   createdAt?: string;
+}
+
+// ---------- Buddy graph & memo interactions ----------
+
+export interface BuddyProfile {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  followerCount: number;
+  followingCount: number;
+  followingVisibility: "public" | "private";
+  /** True iff the viewer currently follows this user. */
+  isFollowing: boolean;
+  /** True iff this user follows the viewer. */
+  isFollower: boolean;
+  /** True iff `id === viewerId`. */
+  isSelf: boolean;
+}
+
+export interface FeedItem {
+  memoId: string;
+  ownerId: string;
+  ownerDisplayName: string;
+  ownerAvatarUrl: string | null;
+  dateKst: string;
+  title: string;
+  charCount: number;
+  pinId: string;
+  pinName: string;
+  pinColor: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReactionTally {
+  emoji: string;
+  count: number;
+  reactedByViewer: boolean;
+}
+
+export interface BuddyComment {
+  id: string;
+  memoId: string;
+  userId: string;
+  body: string;
+  createdAt: string;
+  author: { displayName: string; avatarUrl: string | null };
+}
+
+/** Resolve a server-relative avatar URL (used by feed items and buddy cards). */
+export function resolveAvatarUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return url.startsWith("http") ? url : `${API_BASE}${url}`;
 }

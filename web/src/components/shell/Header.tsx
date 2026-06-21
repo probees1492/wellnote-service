@@ -11,6 +11,7 @@ import {
   Gear,
   Shield,
   PushPin,
+  Users,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,11 @@ export function Header({ variant = "app", showAdminLink = false }: HeaderProps) 
                 <DropdownMenuItem asChild>
                   <Link href="/app/pins" className="flex items-center gap-2">
                     <PushPin className="h-4 w-4" weight="duotone" aria-hidden />핀
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/app/buddies" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" weight="duotone" aria-hidden />버디
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { BuddyVisibilityToggle } from "@/components/buddies/BuddyVisibilityToggle";
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import { LocaleSwitcher } from "@/components/profile/LocaleSwitcher";
 import { RenameDisplayNameDialog } from "@/components/profile/RenameDisplayNameDialog";
@@ -172,6 +173,23 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <LocaleSwitcher />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>버디 공개 설정</CardTitle>
+          <CardDescription>
+            내가 팔로우하는 사람의 목록을 다른 사용자가 볼 수 있게 할지
+            선택하세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {user ? (
+            <BuddyVisibilityToggle
+              value={user.followingVisibility}
+              onChanged={() => void refreshMe()}
+            />
+          ) : null}
         </CardContent>
       </Card>
       <Card>
