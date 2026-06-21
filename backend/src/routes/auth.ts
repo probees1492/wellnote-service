@@ -84,6 +84,9 @@ interface MemUser {
   avatarContentType: string | null;
   avatarUpdatedAt: string | null;
   topicPreferences: string;
+  followerCount: number;
+  followingCount: number;
+  followingVisibility: "public" | "private";
 }
 
 export const memUsers = new Map<string, MemUser>();
@@ -110,6 +113,9 @@ export function safeUser(u: {
   streakLastDay?: string | null;
   displayNameChangedAt?: string | null;
   avatarUpdatedAt?: string | null;
+  followerCount?: number;
+  followingCount?: number;
+  followingVisibility?: "public" | "private";
 }) {
   return {
     id: u.id,
@@ -132,6 +138,9 @@ export function safeUser(u: {
     avatarUrl: u.avatarUpdatedAt
       ? `/users/${u.id}/avatar?v=${encodeURIComponent(u.avatarUpdatedAt)}`
       : null,
+    followerCount: u.followerCount ?? 0,
+    followingCount: u.followingCount ?? 0,
+    followingVisibility: u.followingVisibility ?? "public",
   };
 }
 
@@ -282,6 +291,9 @@ authRoutes.post("/signup", async (c) => {
     avatarContentType: null,
     avatarUpdatedAt: null,
     topicPreferences: "[]",
+    followerCount: 0,
+    followingCount: 0,
+    followingVisibility: "public",
   };
   memUsers.set(user.id, user);
   memUsersByEmail.set(email, user);
@@ -699,6 +711,9 @@ async function upsertSocialUser(
       avatarContentType: null,
       avatarUpdatedAt: null,
       topicPreferences: "[]",
+      followerCount: 0,
+      followingCount: 0,
+      followingVisibility: "public",
     };
     memUsers.set(user.id, user);
     memUsersByEmail.set(email, user);

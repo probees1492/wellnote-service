@@ -27,6 +27,9 @@ export function makeUser(overrides: Partial<User> = {}): User {
     avatarContentType: null,
     avatarUpdatedAt: null,
     topicPreferences: "[]",
+    followerCount: 0,
+    followingCount: 0,
+    followingVisibility: "public",
     ...overrides,
   };
 }

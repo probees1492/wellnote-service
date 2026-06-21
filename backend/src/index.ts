@@ -10,6 +10,7 @@ import { streakRoutes } from "./routes/streak";
 import { pinRoutes } from "./routes/pins";
 import { userRoutes } from "./routes/users";
 import { promptRoutes } from "./routes/prompts";
+import { buddyRoutes } from "./routes/buddies";
 import { scheduled as dailyReadonlyScheduled } from "./cron/daily-readonly";
 import { scheduled as dailyPromptsScheduled } from "./cron/daily-prompts";
 import { onError } from "./lib/error-handler";
@@ -55,6 +56,7 @@ app.route("/streak", streakRoutes);
 app.route("/pins", pinRoutes);
 app.route("/users", userRoutes);
 app.route("/prompts", promptRoutes);
+app.route("/buddies", buddyRoutes);
 
 /** Dispatch the scheduled handler based on which cron fired.
  *  - "0 15 * * *" (15:00 UTC / 00:00 KST) → daily-readonly sweep

@@ -32,6 +32,14 @@ export interface UserRepo {
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   findByDisplayName(displayName: string): Promise<User | null>;
+  searchByDisplayName(
+    query: string,
+    opts?: { limit?: number; excludeId?: string },
+  ): Promise<User[]>;
+  setFollowingVisibility(
+    id: string,
+    visibility: "public" | "private",
+  ): Promise<User>;
   update(id: string, patch: UpdateUserInput): Promise<User>;
   setAvatar(
     id: string,
@@ -81,6 +89,9 @@ interface UserRow {
   avatar_content_type?: string | null;
   avatar_updated_at?: string | null;
   topic_preferences?: string | null;
+  follower_count?: number | null;
+  following_count?: number | null;
+  following_visibility?: string | null;
 }
 
 interface SocialRow {
@@ -112,6 +123,10 @@ function mapUser(row: UserRow): User {
     avatarContentType: row.avatar_content_type ?? null,
     avatarUpdatedAt: row.avatar_updated_at ?? null,
     topicPreferences: row.topic_preferences ?? "[]",
+    followerCount: row.follower_count ?? 0,
+    followingCount: row.following_count ?? 0,
+    followingVisibility:
+      row.following_visibility === "private" ? "private" : "public",
   };
 }
 
@@ -204,6 +219,51 @@ export class D1UserRepo implements UserRepo {
       .bind(displayName.trim().toLowerCase())
       .first<UserRow>();
     return row ? mapUser(row) : null;
+  }
+
+  /** Prefix search on display_name (case-insensitive). Excludes suspended users. */
+  async searchByDisplayName(
+    query: string,
+    opts: { limit?: number; excludeId?: string } = {},
+  ): Promise<User[]> {
+    const trimmed = query.trim();
+    if (trimmed.length === 0) return [];
+    const limit = Math.max(1, Math.min(opts.limit ?? 20, 50));
+    const like = `${trimmed.toLowerCase()}%`;
+    const binds: unknown[] = [like];
+    let where = `LOWER(display_name) LIKE ? AND is_suspended = 0`;
+    if (opts.excludeId) {
+      where += ` AND id <> ?`;
+      binds.push(opts.excludeId);
+    }
+    binds.push(limit);
+    const { results } = await this.db
+      .prepare(
+        `SELECT * FROM users WHERE ${where} ORDER BY follower_count DESC, LOWER(display_name) ASC LIMIT ?`,
+      )
+      .bind(...binds)
+      .all<UserRow>();
+    return (results ?? []).map(mapUser);
+  }
+
+  async setFollowingVisibility(
+    id: string,
+    visibility: "public" | "private",
+  ): Promise<User> {
+    const now = new Date().toISOString();
+    const res = await this.db
+      .prepare(
+        `UPDATE users SET following_visibility = ?, updated_at = ? WHERE id = ?`,
+      )
+      .bind(visibility, now, id)
+      .run();
+    if (!res.meta?.changes) throw new NotFoundError("User");
+    const row = await this.db
+      .prepare(`SELECT * FROM users WHERE id = ?`)
+      .bind(id)
+      .first<UserRow>();
+    if (!row) throw new NotFoundError("User");
+    return mapUser(row);
   }
 
   async update(id: string, patch: UpdateUserInput): Promise<User> {

@@ -29,6 +29,12 @@ export interface User {
   avatarUpdatedAt: string | null;
   /** JSON-encoded array of `PromptTopic` codes for daily-prompt filtering. */
   topicPreferences: string;
+  /** Cached count of users following this user. */
+  followerCount: number;
+  /** Cached count of users this user follows. */
+  followingCount: number;
+  /** Whether others can see this user's following list. */
+  followingVisibility: "public" | "private";
 }
 
 export type SocialProvider = "email" | "google" | "apple";
