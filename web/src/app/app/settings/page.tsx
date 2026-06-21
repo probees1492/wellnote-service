@@ -166,9 +166,10 @@ export default function SettingsPage() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>에디터</CardTitle>
+          <CardTitle>에디터 — 고급</CardTitle>
           <CardDescription>
-            원고지 스타일과 글쓰기 효과를 취향대로 조정하세요.
+            기본은 깨끗한 화면입니다. 종이 질감·봉인 도장 같은 장식을 켜고
+            싶다면 아래에서 하나씩 활성화하세요.
           </CardDescription>
         </CardHeader>
         <CardContent
@@ -176,14 +177,15 @@ export default function SettingsPage() {
           data-testid="editor-settings"
         >
           <div className="flex flex-col gap-2">
-            <span className="font-medium">원고지 스타일</span>
+            <span className="font-medium">종이 스타일</span>
             <div
-              className="grid grid-cols-3 gap-2"
+              className="grid grid-cols-4 gap-2"
               role="radiogroup"
-              aria-label="원고지 스타일"
+              aria-label="종이 스타일"
             >
               {(
                 [
+                  { v: "off", label: "끄기 (기본)" },
                   { v: "manuscript", label: "정통 200자" },
                   { v: "lines", label: "가로선" },
                   { v: "dots", label: "점 격자" },
@@ -239,7 +241,7 @@ export default function SettingsPage() {
             htmlFor="pref-ink"
             className="flex cursor-pointer items-center justify-between gap-3"
           >
-            <span>잉크 커서</span>
+            <span>잉크 커서 효과</span>
             <Checkbox
               id="pref-ink"
               checked={editorPrefs.inkCursor}
@@ -269,6 +271,18 @@ export default function SettingsPage() {
               checked={editorPrefs.sealCountdown}
               onCheckedChange={(v) => updatePrefs({ sealCountdown: v })}
               data-testid="pref-seal"
+            />
+          </Label>
+          <Label
+            htmlFor="pref-stamp"
+            className="flex cursor-pointer items-center justify-between gap-3"
+          >
+            <span>자정 봉인 도장 애니메이션</span>
+            <Checkbox
+              id="pref-stamp"
+              checked={editorPrefs.sealStamp}
+              onCheckedChange={(v) => updatePrefs({ sealStamp: v })}
+              data-testid="pref-stamp"
             />
           </Label>
         </CardContent>

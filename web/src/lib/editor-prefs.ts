@@ -1,11 +1,13 @@
 /**
- * Manuscript editor user preferences, persisted to localStorage.
+ * Editor user preferences, persisted to localStorage.
  *
- * All fields have safe defaults so first-run users get the "정통 200자"
- * (traditional Korean manuscript) experience without any opt-in needed.
+ * Defaults follow the Atomic Habits "make it easy" rule: every decoration is
+ * OFF by default so the user lands on a clean, distraction-free page.
+ * Power users can opt back in to the legacy "정통 200자" experience from
+ * Settings → 에디터 → 고급.
  */
 
-export type GridStyle = "manuscript" | "lines" | "dots";
+export type GridStyle = "off" | "manuscript" | "lines" | "dots";
 
 export interface EditorPrefs {
   gridStyle: GridStyle;
@@ -14,15 +16,21 @@ export interface EditorPrefs {
   inkCursor: boolean;
   penSound: boolean;
   sealCountdown: boolean;
+  /** Final-30s countdown + 封 stamp animation at KST midnight. Default OFF. */
+  sealStamp: boolean;
+  /** Optional warm "paper/parchment" background card tone. Default OFF. */
+  paperTone: boolean;
 }
 
 export const DEFAULT_PREFS: EditorPrefs = {
-  gridStyle: "manuscript",
+  gridStyle: "off",
   typewriter: false,
-  firstLineIndent: true,
-  inkCursor: true,
+  firstLineIndent: false,
+  inkCursor: false,
   penSound: false,
-  sealCountdown: true,
+  sealCountdown: false,
+  sealStamp: false,
+  paperTone: false,
 };
 
 const STORAGE_KEY = "wn:editorPrefs:v1";
@@ -33,16 +41,17 @@ export function loadEditorPrefs(): EditorPrefs {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_PREFS;
     const parsed = JSON.parse(raw) as Partial<EditorPrefs>;
+    const validGrid =
+      parsed.gridStyle === "off" ||
+      parsed.gridStyle === "lines" ||
+      parsed.gridStyle === "dots" ||
+      parsed.gridStyle === "manuscript"
+        ? parsed.gridStyle
+        : DEFAULT_PREFS.gridStyle;
     return {
       ...DEFAULT_PREFS,
       ...parsed,
-      // Validate enum to avoid stale/bad values
-      gridStyle:
-        parsed.gridStyle === "lines" ||
-        parsed.gridStyle === "dots" ||
-        parsed.gridStyle === "manuscript"
-          ? parsed.gridStyle
-          : DEFAULT_PREFS.gridStyle,
+      gridStyle: validGrid,
     };
   } catch {
     return DEFAULT_PREFS;

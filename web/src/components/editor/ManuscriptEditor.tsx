@@ -178,16 +178,18 @@ export const ManuscriptEditor = forwardRef<
       data-ink-cursor={prefs.inkCursor ? "on" : "off"}
       data-pen-sound={prefs.penSound ? "on" : "off"}
     >
-      {/* Warmth glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-12 -top-12 z-0 h-48 w-48 rounded-full blur-3xl transition-opacity duration-700"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(251,191,36,0.35), rgba(251,191,36,0))",
-          opacity: 0.15 + warmth * 0.55,
-        }}
-      />
+      {/* Warmth glow — only when countdown is enabled */}
+      {prefs.sealCountdown ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-12 -top-12 z-0 h-48 w-48 rounded-full blur-3xl transition-opacity duration-700"
+          style={{
+            background:
+              "radial-gradient(closest-side, rgba(251,191,36,0.35), rgba(251,191,36,0))",
+            opacity: 0.15 + warmth * 0.55,
+          }}
+        />
+      ) : null}
 
       {/* Countdown copy, top-right corner */}
       <div className="relative z-10 flex items-center justify-end px-5 pt-3">
@@ -241,8 +243,10 @@ export const ManuscriptEditor = forwardRef<
         </div>
       </div>
 
-      {/* Final-30s countdown + stamp */}
-      <SealingStamp msRemaining={msRemaining} onSealed={onSealed} />
+      {/* Final-30s countdown + stamp — opt-in */}
+      {prefs.sealStamp ? (
+        <SealingStamp msRemaining={msRemaining} onSealed={onSealed} />
+      ) : null}
     </div>
   );
 });
