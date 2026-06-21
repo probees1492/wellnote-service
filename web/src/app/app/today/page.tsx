@@ -243,47 +243,6 @@ export default function TodayPage() {
 
       <Card className="border-0 bg-transparent shadow-none">
         <CardContent className="flex flex-col gap-3 p-0">
-          <div className="flex items-center justify-between gap-3">
-            {interim ? (
-              <span
-                className="flex-1 truncate font-serif text-sm italic text-muted-foreground"
-                data-testid="stt-interim"
-              >
-                {interim}
-              </span>
-            ) : (
-              <span className="flex-1" />
-            )}
-            <div className="flex items-center gap-2">
-              <SpeechToTextButton
-                onTranscript={handleTranscript}
-                onInterim={handleInterim}
-                onError={handleSttError}
-                disabled={!memo}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={handleCameraClick}
-                disabled={!memo}
-                title="사진에서 텍스트 가져오기 (곧 출시)"
-                aria-label="OCR (곧 출시)"
-                data-testid="ocr-button"
-              >
-                <Camera className="h-4 w-4" weight="duotone" aria-hidden />
-              </Button>
-              {memo ? (
-                <MemoActionsMenu
-                  memoId={memo.id}
-                  pinId={memo.pinId ?? null}
-                  onPinChanged={(next) =>
-                    setMemo((prev) => (prev ? { ...prev, pinId: next } : prev))
-                  }
-                />
-              ) : null}
-            </div>
-          </div>
           <ManuscriptEditor
             ref={editorRef}
             value={body}
@@ -295,6 +254,43 @@ export default function TodayPage() {
             data-testid="memo-editor"
             data-ready={memo ? "true" : "false"}
           />
+          <div className="flex items-center gap-2">
+            <SpeechToTextButton
+              onTranscript={handleTranscript}
+              onInterim={handleInterim}
+              onError={handleSttError}
+              disabled={!memo}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={handleCameraClick}
+              disabled={!memo}
+              title="사진에서 텍스트 가져오기 (곧 출시)"
+              aria-label="OCR (곧 출시)"
+              data-testid="ocr-button"
+            >
+              <Camera className="h-4 w-4" weight="duotone" aria-hidden />
+            </Button>
+            {memo ? (
+              <MemoActionsMenu
+                memoId={memo.id}
+                pinId={memo.pinId ?? null}
+                onPinChanged={(next) =>
+                  setMemo((prev) => (prev ? { ...prev, pinId: next } : prev))
+                }
+              />
+            ) : null}
+            {interim ? (
+              <span
+                className="flex-1 truncate font-serif text-sm italic text-muted-foreground"
+                data-testid="stt-interim"
+              >
+                {interim}
+              </span>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
 

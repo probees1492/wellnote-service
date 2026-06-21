@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { DotsThree, PushPin, PushPinSlash } from "@phosphor-icons/react/dist/ssr";
+import { PushPin, PushPinSlash } from "@phosphor-icons/react/dist/ssr";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -55,13 +55,14 @@ export function MemoActionsMenu({
         <DropdownMenuTrigger asChild>
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="icon"
-            aria-label="메모 메뉴"
+            aria-label="핀"
+            title="핀"
             data-testid="memo-actions-trigger"
             disabled={busy}
           >
-            <DotsThree className="h-5 w-5" weight="bold" aria-hidden />
+            <PushPin className="h-4 w-4" weight="duotone" aria-hidden />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
