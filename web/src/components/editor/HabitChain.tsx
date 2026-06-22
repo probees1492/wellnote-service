@@ -37,22 +37,9 @@ export function HabitChain({
     for (const c of grid.cells) cellsByDate.set(c.date, c.charCount);
   }
 
-  if (streak.current <= 0) {
-    return (
-      <div
-        className={cn(
-          "flex items-center gap-2 text-sm text-muted-foreground",
-          className,
-        )}
-        data-testid="habit-chain"
-      >
-        <span className="select-none" aria-hidden>
-          ✨
-        </span>
-        <span>오늘이 첫날입니다 — 한 줄만 적어볼까요?</span>
-      </div>
-    );
-  }
+  // No empty-state copy when the streak hasn't started yet — the rest of
+  // the page already invites the user to write.
+  if (streak.current <= 0) return null;
 
   return (
     <div

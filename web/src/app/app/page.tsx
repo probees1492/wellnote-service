@@ -111,22 +111,15 @@ export default function HomePage() {
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold tracking-tight">활동 그리드</h2>
-        {streak ? (
+        {streak && streak.current > 0 ? (
           <div
             className="rounded-md border bg-card px-3 py-2 text-sm"
             data-testid="streak-banner"
           >
-            {streak.current > 0 ? (
-              <span className="text-foreground">
-                <span aria-hidden>🔥</span>{" "}
-                <span className="font-semibold">{streak.current}일</span> 연속!
-              </span>
-            ) : (
-              <span className="text-muted-foreground">
-                <span aria-hidden>✍️</span> 오늘이 첫날입니다 — 메모를 시작해
-                보세요.
-              </span>
-            )}
+            <span className="text-foreground">
+              <span aria-hidden>🔥</span>{" "}
+              <span className="font-semibold">{streak.current}일</span> 연속!
+            </span>
           </div>
         ) : null}
         {err ? (
