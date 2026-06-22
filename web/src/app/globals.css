@@ -414,3 +414,64 @@
     inset -2px -2px 2px rgba(0, 0, 0, 0.25),
     inset 2px 2px 2px rgba(255, 255, 255, 0.4);
 }
+
+/* ------------------------------------------------------------------ */
+/* Print: strip the app shell, keep only the memo paper.              */
+/* ------------------------------------------------------------------ */
+@media print {
+  @page {
+    margin: 16mm 14mm;
+  }
+
+  /* Walk up the tree turning chrome off. */
+  body * {
+    visibility: hidden;
+  }
+  /* The paper + its descendants stay visible … */
+  .wn-paper,
+  .wn-paper *,
+  .markdown-body,
+  .markdown-body * {
+    visibility: visible;
+  }
+  /* … and the paper is laid out as a normal block at the top of the page. */
+  .wn-paper {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #ffffff !important;
+    color: #1f1a12 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+  /* No live decoration in print — keeps Hangul crisp on paper. */
+  .wn-typewriter-mask {
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+  /* Hide all data-testid'd buttons + toolbars + nav + STT/TTS/Pin etc.    */
+  [data-testid="sidebar"],
+  [data-testid="sidebar-slot"],
+  [data-testid="header"],
+  [data-testid="prompt-seed"],
+  [data-testid="tts-controls"],
+  [data-testid="memo-actions-trigger"],
+  [data-testid="ocr-button"],
+  [data-testid="print-button"],
+  [data-testid="memo-interactions"],
+  [data-testid="memo-editor"] + div,
+  [data-testid="char-count"],
+  [data-testid="stt-interim"],
+  [data-testid="save-state"] {
+    display: none !important;
+  }
+  /* Reset color scheme so dark mode doesn't pour brown paper to printer. */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #1f1a12 !important;
+  }
+}

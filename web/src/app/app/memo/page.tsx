@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Printer } from "@phosphor-icons/react/dist/ssr";
 
 import { BuddyAvatar } from "@/components/buddies/BuddyAvatar";
 import { CommentSection } from "@/components/buddies/CommentSection";
@@ -250,7 +251,20 @@ function MemoViewerInner() {
         </CardContent>
       </Card>
 
-      <TtsControls text={memo.body} />
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => window.print()}
+          title="인쇄 / PDF 저장"
+          aria-label="인쇄"
+          data-testid="print-button"
+        >
+          <Printer className="h-4 w-4" weight="duotone" aria-hidden />
+        </Button>
+        <TtsControls text={memo.body} />
+      </div>
 
       {interactionsAvailable ? (
         <div className="flex flex-col gap-4" data-testid="memo-interactions">

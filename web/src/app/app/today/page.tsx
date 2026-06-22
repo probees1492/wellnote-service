@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera } from "@phosphor-icons/react/dist/ssr";
+import { Camera, Printer } from "@phosphor-icons/react/dist/ssr";
 
 import { DateHeading } from "@/components/editor/DateHeading";
 import { HabitChain } from "@/components/editor/HabitChain";
@@ -307,6 +307,18 @@ export default function TodayPage() {
                   }
                 />
               ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => window.print()}
+                disabled={!memo}
+                title="인쇄 / PDF 저장"
+                aria-label="인쇄"
+                data-testid="print-button"
+              >
+                <Printer className="h-4 w-4" weight="duotone" aria-hidden />
+              </Button>
             </div>
             <div className="flex min-w-0 items-center justify-end gap-2 text-sm text-muted-foreground">
               {interim ? (
