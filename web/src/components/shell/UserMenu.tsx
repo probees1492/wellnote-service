@@ -54,12 +54,8 @@ export function UserMenu() {
           >
             {initials}
           </span>
-          <span
-            className="hidden text-sm sm:inline-block"
-            data-testid="me-name"
-          >
-            {user.displayName || user.email}
-          </span>
+          {/* Pen name intentionally hidden in the header — surfaced inside
+              the dropdown so the top bar stays minimal. */}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

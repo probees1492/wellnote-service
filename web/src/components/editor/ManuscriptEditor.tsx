@@ -104,7 +104,13 @@ export const ManuscriptEditor = forwardRef<
     autosize();
   }, [value, autosize]);
 
-  // Typewriter focus: scroll the caret line into the viewport's vertical centre.
+  // Typewriter focus: scroll the caret line into the viewport's vertical
+  // centre. Needs a bottom spacer (rendered below) so the document can
+  // scroll past the editor's end — otherwise the last lines pin to the
+  // bottom of the viewport instead of centering. We also clamp via
+  // window.scrollTo's intrinsic min 0 so the first lines do NOT scroll
+  // (they just sit near the top until enough content has been written for
+  // the caret to drift below mid-viewport).
   useEffect(() => {
     if (!prefs.typewriter) return;
     const ta = taRef.current;
@@ -117,20 +123,31 @@ export const ManuscriptEditor = forwardRef<
         raf = null;
         const cs = window.getComputedStyle(ta);
         const lh = parseFloat(cs.lineHeight) || 32;
-        const beforeCaret = ta.value.slice(0, ta.selectionEnd ?? 0);
+        // Caret column count won't matter — line count up to caret does.
+        const caretIdx = ta.selectionEnd ?? ta.value.length;
+        const beforeCaret = ta.value.slice(0, caretIdx);
         const linesBefore = beforeCaret.split("\n").length - 1;
         const taRect = ta.getBoundingClientRect();
+        // taRect.top is viewport-relative; convert to document-relative.
         const caretY =
           taRect.top + window.scrollY + linesBefore * lh + lh / 2;
-        const targetScroll = caretY - window.innerHeight / 2;
-        window.scrollTo({ top: targetScroll, behavior: "smooth" });
+        const targetScroll = Math.max(
+          0,
+          caretY - window.innerHeight / 2,
+        );
+        // 'instant' for keyup so the caret doesn't visibly lag behind the
+        // smooth scroll while typing fast. Smooth still feels good on
+        // click/focus, but the keyup path dominates.
+        window.scrollTo({ top: targetScroll, behavior: "instant" });
       });
     };
     const onAny = () => scheduleScroll();
+    ta.addEventListener("input", onAny);
     ta.addEventListener("keyup", onAny);
     ta.addEventListener("click", onAny);
     ta.addEventListener("focus", onAny);
     return () => {
+      ta.removeEventListener("input", onAny);
       ta.removeEventListener("keyup", onAny);
       ta.removeEventListener("click", onAny);
       ta.removeEventListener("focus", onAny);
@@ -246,6 +263,14 @@ export const ManuscriptEditor = forwardRef<
       {/* Final-30s countdown + stamp — opt-in */}
       {prefs.sealStamp ? (
         <SealingStamp msRemaining={msRemaining} onSealed={onSealed} />
+      ) : null}
+
+      {/* Bottom spacer for typewriter mode — gives the document room to
+          scroll so the LAST line can sit at the viewport centre. Sized at
+          50vh so any caret position within the last screenful is
+          centerable. */}
+      {prefs.typewriter ? (
+        <div aria-hidden className="h-[50vh] w-full" />
       ) : null}
     </div>
   );

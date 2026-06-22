@@ -31,7 +31,7 @@ export function AvatarPicker({ user, onChanged }: Props) {
   async function handleFile(file: File) {
     setError(null);
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("JPEG, PNG, WEBP만 업로드할 수 있어요.");
+      setError("이미지 파일만 업로드할 수 있어요.");
       return;
     }
     if (file.size > MAX_BYTES) {
@@ -121,7 +121,7 @@ export function AvatarPicker({ user, onChanged }: Props) {
           </span>
         ) : (
           <span className="text-xs text-muted-foreground">
-            JPEG·PNG·WEBP, 최대 2 MiB.
+            이미지 파일, 최대 2 MiB.
           </span>
         )}
       </div>

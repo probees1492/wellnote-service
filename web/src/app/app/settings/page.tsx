@@ -29,6 +29,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const REMINDER_KEY = "wn:reminderOptIn";
+const REMINDER_EVENING_KEY = "wn:reminderEvening"; // "HH:MM"
+const REMINDER_LAST_CALL_KEY = "wn:reminderLastCall"; // "HH:MM"
+const REMINDER_DEFAULTS = { evening: "21:00", lastCall: "23:30" };
 
 export default function SettingsPage() {
   const t = useT();
@@ -39,6 +42,12 @@ export default function SettingsPage() {
   const [txs, setTxs] = useState<CreditTx[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [reminderOptIn, setReminderOptIn] = useState(false);
+  const [reminderEvening, setReminderEvening] = useState(
+    REMINDER_DEFAULTS.evening,
+  );
+  const [reminderLastCall, setReminderLastCall] = useState(
+    REMINDER_DEFAULTS.lastCall,
+  );
   const [notifPermission, setNotifPermission] = useState<
     NotificationPermission | "unsupported"
   >("default");
@@ -63,6 +72,10 @@ export default function SettingsPage() {
       setReminderOptIn(
         window.localStorage.getItem(REMINDER_KEY) === "true",
       );
+      const ev = window.localStorage.getItem(REMINDER_EVENING_KEY);
+      if (ev && /^\d{2}:\d{2}$/.test(ev)) setReminderEvening(ev);
+      const lc = window.localStorage.getItem(REMINDER_LAST_CALL_KEY);
+      if (lc && /^\d{2}:\d{2}$/.test(lc)) setReminderLastCall(lc);
     } catch {
       /* ignore */
     }
@@ -72,6 +85,19 @@ export default function SettingsPage() {
       setNotifPermission(Notification.permission);
     }
   }, []);
+
+  function handleReminderTime(slot: "evening" | "lastCall", value: string) {
+    if (slot === "evening") setReminderEvening(value);
+    else setReminderLastCall(value);
+    try {
+      window.localStorage.setItem(
+        slot === "evening" ? REMINDER_EVENING_KEY : REMINDER_LAST_CALL_KEY,
+        value,
+      );
+    } catch {
+      /* ignore */
+    }
+  }
 
   async function handleReminderToggle(next: boolean) {
     setReminderOptIn(next);
@@ -166,7 +192,9 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
-      <Card>
+      {/* Language picker temporarily hidden — i18n still partial, beta
+          ships Korean-only. Re-enable once translations are complete. */}
+      {/* <Card>
         <CardHeader>
           <CardTitle>{t("settings.language")}</CardTitle>
           <CardDescription>{t("settings.language_desc")}</CardDescription>
@@ -174,7 +202,7 @@ export default function SettingsPage() {
         <CardContent>
           <LocaleSwitcher />
         </CardContent>
-      </Card>
+      </Card> */}
       <Card>
         <CardHeader>
           <CardTitle>버디 공개 설정</CardTitle>
@@ -196,10 +224,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>알림</CardTitle>
           <CardDescription>
-            매일 22:00 KST에 메모 작성 리마인더를 받습니다.
+            저녁 & 마감 직전 두 번, 브라우저가 열려 있을 때 알림이 뜹니다.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm">
+        <CardContent className="flex flex-col gap-3 text-sm">
           <Label
             htmlFor="reminder-toggle"
             className="flex cursor-pointer items-center justify-between gap-3"
@@ -213,18 +241,64 @@ export default function SettingsPage() {
             />
           </Label>
           {reminderOptIn ? (
-            <p
-              className="mt-2 text-xs text-muted-foreground"
-              data-testid="reminder-status"
-            >
-              {notifPermission === "granted"
-                ? "브라우저 알림이 허용되었습니다. 이 브라우저가 열려 있는 동안 22:00 KST에 알림이 표시됩니다."
-                : notifPermission === "denied"
-                  ? "브라우저 알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요."
-                  : notifPermission === "unsupported"
-                    ? "이 브라우저는 알림을 지원하지 않습니다."
-                    : "브라우저 알림 허용 요청을 처리하는 중입니다."}
-            </p>
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Label
+                  htmlFor="reminder-evening"
+                  className="flex items-center justify-between gap-3 rounded-md border bg-card/40 px-3 py-2"
+                >
+                  <div className="flex flex-col">
+                    <span>저녁 알림</span>
+                    <span className="text-xs text-muted-foreground">
+                      하루 한 줄이라도
+                    </span>
+                  </div>
+                  <input
+                    id="reminder-evening"
+                    type="time"
+                    value={reminderEvening}
+                    onChange={(e) =>
+                      handleReminderTime("evening", e.target.value)
+                    }
+                    className="rounded-md border bg-background px-2 py-1 text-sm tabular-nums"
+                    data-testid="reminder-evening-time"
+                  />
+                </Label>
+                <Label
+                  htmlFor="reminder-last-call"
+                  className="flex items-center justify-between gap-3 rounded-md border bg-card/40 px-3 py-2"
+                >
+                  <div className="flex flex-col">
+                    <span>마감 직전 알림</span>
+                    <span className="text-xs text-muted-foreground">
+                      자정 봉인 전 마지막 푸시
+                    </span>
+                  </div>
+                  <input
+                    id="reminder-last-call"
+                    type="time"
+                    value={reminderLastCall}
+                    onChange={(e) =>
+                      handleReminderTime("lastCall", e.target.value)
+                    }
+                    className="rounded-md border bg-background px-2 py-1 text-sm tabular-nums"
+                    data-testid="reminder-last-call-time"
+                  />
+                </Label>
+              </div>
+              <p
+                className="text-xs text-muted-foreground"
+                data-testid="reminder-status"
+              >
+                {notifPermission === "granted"
+                  ? `브라우저 알림이 허용되었습니다. 이 브라우저가 열려 있는 동안 ${reminderEvening}·${reminderLastCall}에 알림이 표시됩니다.`
+                  : notifPermission === "denied"
+                    ? "브라우저 알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요."
+                    : notifPermission === "unsupported"
+                      ? "이 브라우저는 알림을 지원하지 않습니다."
+                      : "브라우저 알림 허용 요청을 처리하는 중입니다."}
+              </p>
+            </>
           ) : null}
         </CardContent>
       </Card>

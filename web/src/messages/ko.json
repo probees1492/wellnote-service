@@ -64,11 +64,11 @@
   "settings.rename_cooldown": "{hours}시간 {minutes}분 후에 다시 변경할 수 있어요.",
 
   "settings.avatar.title": "프로필 사진",
-  "settings.avatar.hint": "JPEG·PNG·WEBP, 최대 2 MiB.",
+  "settings.avatar.hint": "이미지 파일, 최대 2 MiB.",
   "settings.avatar.upload": "사진 등록",
   "settings.avatar.change": "사진 변경",
   "settings.avatar.remove": "제거",
-  "settings.avatar.error.type": "JPEG, PNG, WEBP만 업로드할 수 있어요.",
+  "settings.avatar.error.type": "이미지 파일만 업로드할 수 있어요.",
   "settings.avatar.error.size": "이미지는 2 MiB 이하만 업로드할 수 있어요.",
   "settings.avatar.error.generic": "업로드에 실패했어요.",
 
