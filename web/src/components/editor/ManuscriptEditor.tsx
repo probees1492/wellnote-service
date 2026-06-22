@@ -92,11 +92,13 @@ export const ManuscriptEditor = forwardRef<
   }, []);
 
   // Auto-grow the textarea to fit content (no inner scroll — page scrolls).
+  // Floor at ~3 lines so an empty memo isn't a hairline strip; otherwise
+  // the height tracks scrollHeight 1:1 so paper length tracks line count.
   const autosize = useCallback(() => {
     const ta = taRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    const next = Math.max(ta.scrollHeight, 420);
+    const next = Math.max(ta.scrollHeight, 96);
     ta.style.height = `${next}px`;
   }, []);
 
@@ -241,8 +243,9 @@ export const ManuscriptEditor = forwardRef<
             )}
             style={{
               caretColor: "hsl(var(--primary))",
-              minHeight: 420,
-              // letter-spacing nudged so 명조체 글자가 32px 칸 폭에 자연스럽게 맞춤
+              // No fixed minHeight — autosize() floors at ~3 lines so the
+              // paper hugs the content instead of locking to 420px even
+              // when empty.
               lineHeight: "2rem",
             }}
             data-testid={dataTestId}
