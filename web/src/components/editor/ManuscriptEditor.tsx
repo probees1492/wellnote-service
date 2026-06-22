@@ -92,13 +92,24 @@ export const ManuscriptEditor = forwardRef<
   }, []);
 
   // Auto-grow the textarea to fit content (no inner scroll — page scrolls).
-  // Floor at ~3 lines so an empty memo isn't a hairline strip; otherwise
-  // the height tracks scrollHeight 1:1 so paper length tracks line count.
+  //
+  // Sizing rule: the paper starts at a comfortable default (~8 lines) and
+  // only begins to grow once the text has filled half of it. From there
+  // the paper keeps half-a-paper of empty room below the caret. Concretely:
+  //
+  //   height = max(scrollHeight + halfDefault, default)
+  //
+  // - Empty / short writing  → height = default        (paper looks stable)
+  // - Content == half default → height = default        (about to flip)
+  // - Content >  half default → height grows by content over the halfway
+  //                              line, leaving the bottom half as runway
   const autosize = useCallback(() => {
     const ta = taRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    const next = Math.max(ta.scrollHeight, 96);
+    const DEFAULT = 256; // ≈ 8 lines × 32px line-height
+    const HALF = DEFAULT / 2;
+    const next = Math.max(ta.scrollHeight + HALF, DEFAULT);
     ta.style.height = `${next}px`;
   }, []);
 
