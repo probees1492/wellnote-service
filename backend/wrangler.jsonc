@@ -87,45 +87,6 @@
       "triggers": { "crons": [] }
     },
 
-    "stage": {
-      "name": "wellnote-api-stage",
-      "vars": {
-        "ENVIRONMENT": "stage",
-        "CF_ACCOUNT_ID": "6614b80f86c1a1e2de9b22ba93f460f4"
-      },
-      "routes": [
-        { "pattern": "api-stage.wellnote.io", "custom_domain": true }
-      ],
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "wellnote-stage",
-          "database_id": "2145f713-1fc8-49fb-8e8c-94f94f94177f",
-          "migrations_dir": "migrations"
-        }
-      ],
-      "r2_buckets": [
-        {
-          "binding": "MEMO_BUCKET",
-          "bucket_name": "wellnote-memos-stage"
-        }
-      ],
-      "kv_namespaces": [
-        {
-          "binding": "SESSION_KV",
-          "id": "effc4ab6df3546bf80191fd340d866a6"
-        }
-      ],
-      "ai": {
-        "binding": "AI"
-      },
-      // No cron triggers on this env — Cloudflare's free-plan account limit
-      // is 5 crons total, so we keep the two daily jobs (readonly sweep +
-      // prompt pool + usage snapshot piggyback) only on dev. Re-enable here
-      // once real prod traffic starts.
-      "triggers": { "crons": [] }
-    },
-
     "prod": {
       "name": "wellnote-api-prod",
       "vars": {

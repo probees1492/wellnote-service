@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - "release/**"
       - main
     paths:
       - "backend/**"
@@ -15,7 +14,7 @@ on:
         description: "Target environment"
         required: true
         type: choice
-        options: [dev, stage, prod]
+        options: [dev, prod]
 
 concurrency:
   group: deploy-backend-${{ github.ref }}
@@ -38,8 +37,6 @@ jobs:
             echo "environment=$INPUT_ENV" >> "$GITHUB_OUTPUT"
           elif [ "$GH_REF" = "refs/heads/develop" ]; then
             echo "environment=dev" >> "$GITHUB_OUTPUT"
-          elif [[ "$GH_REF" == refs/heads/release/* ]]; then
-            echo "environment=stage" >> "$GITHUB_OUTPUT"
           elif [ "$GH_REF" = "refs/heads/main" ]; then
             echo "environment=prod" >> "$GITHUB_OUTPUT"
           else

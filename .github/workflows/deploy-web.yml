@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - "release/**"
       - main
     paths:
       - "web/**"
@@ -15,7 +14,7 @@ on:
         description: "Target environment"
         required: true
         type: choice
-        options: [dev, stage, prod]
+        options: [dev, prod]
 
 concurrency:
   group: deploy-web-${{ github.ref }}
@@ -40,8 +39,6 @@ jobs:
             ENV="$INPUT_ENV"
           elif [ "$GH_REF" = "refs/heads/develop" ]; then
             ENV="dev"
-          elif [[ "$GH_REF" == refs/heads/release/* ]]; then
-            ENV="stage"
           elif [ "$GH_REF" = "refs/heads/main" ]; then
             ENV="prod"
           else
@@ -49,10 +46,9 @@ jobs:
           fi
           echo "environment=$ENV" >> "$GITHUB_OUTPUT"
           case "$ENV" in
-            dev)   echo "api_base_url=https://api-dev.wellnote.io"   >> "$GITHUB_OUTPUT"; echo "branch=develop" >> "$GITHUB_OUTPUT" ;;
-            stage) echo "api_base_url=https://api-stage.wellnote.io" >> "$GITHUB_OUTPUT"; echo "branch=stage"   >> "$GITHUB_OUTPUT" ;;
-            prod)  echo "api_base_url=https://api.wellnote.io"       >> "$GITHUB_OUTPUT"; echo "branch=main"    >> "$GITHUB_OUTPUT" ;;
-            *)     echo "api_base_url="                                                         >> "$GITHUB_OUTPUT"; echo "branch="        >> "$GITHUB_OUTPUT" ;;
+            dev)  echo "api_base_url=https://api-dev.wellnote.io" >> "$GITHUB_OUTPUT"; echo "branch=develop" >> "$GITHUB_OUTPUT" ;;
+            prod) echo "api_base_url=https://api.wellnote.io"     >> "$GITHUB_OUTPUT"; echo "branch=main"    >> "$GITHUB_OUTPUT" ;;
+            *)    echo "api_base_url="                                                       >> "$GITHUB_OUTPUT"; echo "branch="        >> "$GITHUB_OUTPUT" ;;
           esac
 
   deploy:
