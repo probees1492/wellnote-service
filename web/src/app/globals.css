@@ -416,62 +416,65 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Print: strip the app shell, keep only the memo paper.              */
+/* Print target — off-screen by default, swapped in at @media print.   */
 /* ------------------------------------------------------------------ */
+.wn-print-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Light manuscript grid baked into the printable when the toggle is on.
+   32px keeps it aligned with the on-screen wn-paper-manuscript cell rhythm. */
+.wn-printable-grid {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 31px,
+    rgba(31, 26, 18, 0.18) 31px,
+    rgba(31, 26, 18, 0.18) 32px
+  );
+}
+
 @media print {
   @page {
     margin: 16mm 14mm;
   }
 
-  /* Walk up the tree turning chrome off. */
-  body * {
-    visibility: hidden;
-  }
-  /* The paper + its descendants stay visible … */
-  .wn-paper,
-  .wn-paper *,
-  .markdown-body,
-  .markdown-body * {
-    visibility: visible;
-  }
-  /* … and the paper is laid out as a normal block at the top of the page. */
-  .wn-paper {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background-color: #ffffff !important;
-    color: #1f1a12 !important;
-    box-shadow: none !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-  }
-  /* No live decoration in print — keeps Hangul crisp on paper. */
-  .wn-typewriter-mask {
-    -webkit-mask-image: none !important;
-    mask-image: none !important;
-  }
-  /* Hide all data-testid'd buttons + toolbars + nav + STT/TTS/Pin etc.    */
-  [data-testid="sidebar"],
-  [data-testid="sidebar-slot"],
-  [data-testid="header"],
-  [data-testid="prompt-seed"],
-  [data-testid="tts-controls"],
-  [data-testid="memo-actions-trigger"],
-  [data-testid="ocr-button"],
-  [data-testid="print-button"],
-  [data-testid="memo-interactions"],
-  [data-testid="memo-editor"] + div,
-  [data-testid="char-count"],
-  [data-testid="stt-interim"],
-  [data-testid="save-state"] {
+  /* Strategy: every direct child of <body> is hidden, except the print
+     target the dialog portals in (`data-print-root`). This keeps the
+     entire app shell (sidebar, header, dialog scrim, etc.) out of the
+     printed page without having to enumerate selectors. */
+  body > * {
     display: none !important;
   }
-  /* Reset color scheme so dark mode doesn't pour brown paper to printer. */
+  body > [data-print-root] {
+    display: block !important;
+    position: static !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body > [data-print-root] * {
+    visibility: visible !important;
+  }
+
+  /* Reset color scheme so dark-mode brown paper doesn't bleed to printer. */
   html,
   body {
     background: #ffffff !important;
     color: #1f1a12 !important;
+  }
+
+  /* Page-number suffix — content() pulls in the actual page number when
+     the user prints multi-page memos. Preview mode shows just "p.". */
+  .wn-page-number::after {
+    content: " " counter(page);
   }
 }

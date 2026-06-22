@@ -11,6 +11,7 @@ import { CommentSection } from "@/components/buddies/CommentSection";
 import { ReactionBar } from "@/components/buddies/ReactionBar";
 import { DateHeading } from "@/components/editor/DateHeading";
 import { MemoActionsMenu } from "@/components/memo/MemoActionsMenu";
+import { PrintPreviewDialog } from "@/components/print/PrintPreviewDialog";
 import { TtsControls } from "@/components/editor/TtsControls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ function MemoViewerInner() {
   const [errCode, setErrCode] = useState<string | undefined>(undefined);
   const [gridStyle, setGridStyle] = useState<string>("manuscript");
   const [firstLineIndent, setFirstLineIndent] = useState<boolean>(true);
+  const [printOpen, setPrintOpen] = useState(false);
 
   useEffect(() => {
     const prefs = loadEditorPrefs();
@@ -256,7 +258,7 @@ function MemoViewerInner() {
           type="button"
           variant="outline"
           size="icon"
-          onClick={() => window.print()}
+          onClick={() => setPrintOpen(true)}
           title="인쇄 / PDF 저장"
           aria-label="인쇄"
           data-testid="print-button"
@@ -272,6 +274,15 @@ function MemoViewerInner() {
           <CommentSection memoId={memo.id} ownerId={ownerId} />
         </div>
       ) : null}
+
+      <PrintPreviewDialog
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        dateKst={memo.dateKst}
+        body={memo.body}
+        displayName={buddyMeta?.ownerDisplayName ?? me?.displayName}
+        readonlyAt={memo.readonlyAt ?? null}
+      />
     </div>
   );
 }

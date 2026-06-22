@@ -14,6 +14,7 @@ import { PromptSeed } from "@/components/editor/PromptSeed";
 import { SpeechToTextButton } from "@/components/editor/SpeechToTextButton";
 import { WritingProgressBar } from "@/components/editor/WritingProgressBar";
 import { MemoActionsMenu } from "@/components/memo/MemoActionsMenu";
+import { PrintPreviewDialog } from "@/components/print/PrintPreviewDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -22,6 +23,7 @@ import {
   type MemoWithBody,
   type StreakStatus,
 } from "@/lib/api";
+import { useAuth } from "@/lib/auth-store";
 import { insertAtCursor } from "@/lib/speech-recognition";
 import { todayKst } from "@/lib/time";
 
@@ -46,7 +48,9 @@ function useTimeOfDayPlaceholder(): string {
 export default function TodayPage() {
   const today = todayKst();
   const router = useRouter();
+  const user = useAuth((s) => s.user);
   const [memo, setMemo] = useState<MemoWithBody | null>(null);
+  const [printOpen, setPrintOpen] = useState(false);
   const [body, setBody] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -311,7 +315,7 @@ export default function TodayPage() {
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => window.print()}
+                onClick={() => setPrintOpen(true)}
                 disabled={!memo}
                 title="인쇄 / PDF 저장"
                 aria-label="인쇄"
@@ -343,6 +347,15 @@ export default function TodayPage() {
           </div>
         </CardContent>
       </Card>
+
+      <PrintPreviewDialog
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        dateKst={memo?.dateKst ?? today}
+        body={body}
+        displayName={user?.displayName}
+        readonlyAt={memo?.readonlyAt ?? null}
+      />
     </div>
   );
 }
